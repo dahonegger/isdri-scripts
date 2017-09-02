@@ -7,10 +7,12 @@ function frameOut = bfWrapper(frameIn,edgeBoostFactor,asymmetryFactor)
 
 % Defaults
 if ~exist('edgeBoostFactor','var') || isempty(edgeBoostFactor)
-    edgeBoostFactor = 1.25; % Higher numbers boost edges LESS
+%     edgeBoostFactor = 1.25; % Higher numbers boost edges LESS
+    edgeBoostFactor = 2; % Higher numbers boost edges LESS
 end
 if ~exist('asymmetryFactor','var') || isempty(asymmetryFactor)
-    asymmetryFactor = 1.25; % Higher numbers boost edges LESS
+%     asymmetryFactor = 1.25; % Higher numbers boost edges LESS
+    asymmetryFactor = 0.5; % Higher numbers boost edges LESS
 end
 
 

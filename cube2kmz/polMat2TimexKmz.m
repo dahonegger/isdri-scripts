@@ -29,10 +29,10 @@ radarLatitude      = [];%41.271735; %41.271747; % Leave blank [] to use UTM coor
 radarLongitude     = [];%-72.343475; % Leave blank [] to use UTM coordinates in Cube.results
 heading            = [];%282.5;         % If cube's internal heading is wrong, apply this heading instead
 maxHeading         = 359;         % Set maximum heading value (clockwise from North) for footprint
-rangeDecimation    = 1;           % Decimate ranges by this factor to speed up interpolation to Cartesian
+rangeDecimation    = 5;           % Decimate ranges by this factor to speed up interpolation to Cartesian
 cartGrid_dx        = 15;          % kmz requires cartesian grid - this is spatial resolution
 cartGrid_dy        = 15;          % kmz requires cartesian grid - this is spatial resolution
-colorAxisLimits    = [0 150];    % caxis
+colorAxisLimits    = [0 225];    % caxis
 if nargin < 3
     doBilateralFilter  = false;       % Choose to apply bilateral filter
 end
@@ -78,6 +78,11 @@ end
 if isempty(heading)
     heading = results.heading;
 end  
+
+%% Little edit!
+
+% Rg = Rg(1:3000);
+% timex = timex(1:3000,:);
 
 %% Get time information %%
 minTime  = epoch2Matlab(min(timeInt(:)));
@@ -191,7 +196,7 @@ kmlStr{1} = ge_imagesc(...
                 'cLimHigh',colorAxisLimits(2),...
                 'cLimLow',colorAxisLimits(1),...
                 'colorMap','hot',...
-                'crispFactor',1,...
+                'crispFactor',2,...
                 'description','',...
                 'nanValue',-1,...
                 'visibility',1,...
