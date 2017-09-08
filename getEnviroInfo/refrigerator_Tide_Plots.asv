@@ -13,7 +13,7 @@ plot(dnTide(idxStart:idxEnd),yTide(idxStart:idxEnd))
 datetick('x','ddd mm/dd')
 box on; grid on; axis tight;
 ylim([-0.9 0.9])
-% set(gca,'xtick',[dnTide(idxStart):0.5:dnTide(idxEnd)])
+set(gca,'xt
 
 
 sunday = sunday+7;
