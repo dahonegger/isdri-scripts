@@ -1,4 +1,4 @@
-function Cube = coGeoRectify(Cube,controlCubeName,doOverwrite)
+function Cube = coGeoRectifyPurisima(Cube,controlCubeName,doOverwrite)
 %
 % This function reads in a coRectified Cube
 % e.g. ......
@@ -15,21 +15,22 @@ function Cube = coGeoRectify(Cube,controlCubeName,doOverwrite)
 % Cube.results.headingOld
 %
 % 2017-05-31 David Honegger
+% 2017-09-09 David Honegger: Hardcode for Purisima radar site
 %
  dbug = false;
 
 if nargin<2
-    controlCubeName = 'geoRefTimex.mat';
+    controlCubeName = 'geoRefTimexPurisima.mat';
     doOverwrite = true;
 elseif nargin<3
     doOverwrite = true;
 end
 
 % xcorrelation parameters   
-azimuthResolutionFactor = 1/20;    % Resolution factor of search grid (1 if same as input resolution, 1/2 if two gridpoints per input resolution cell, etc.)
+azimuthResolutionFactor = 1/20;    % Resolution factor of search grid precision (1 if same as input resolution, 1/2 if two gridpoints per input resolution cell, etc.)
 minRangeToAnalyze = 400;           % Min range to consider (in pixels)
-maxAziToAnalyze = 180;             % Max azimuth to consider (in degrees)
-dRange = 50;                        % Range decimation of analysis (in pixels)
+maxAziToAnalyze = 100;             % Max azimuth to consider (in degrees)
+dRange = 50;                       % Range decimation of analysis (in pixels)
 maxLag = 5;                        % Maximum lag to consider (in degrees)
 threshLag = 5;                     % Frames with lags beyond this value don't get adjusted
 interpMethod = 'spline';           % For griddedInterpolant.m ... 'linear','spline','nearest', etc.

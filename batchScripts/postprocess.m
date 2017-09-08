@@ -1,17 +1,20 @@
+%%% This wrapper/workflow script batch-processes polar interpolated matfiles once settings are in production mode (set number of azimuthal bins, etc.)
+%%%
+
 %% What to do?
-doProcessCube           = true;
-doWriteKmz              = true;
-doWriteBfKmz            = false;
+doProcessCube           = false;  % Processing includes coRectifying and coGeoRectifying
+doWriteKmz              = true;   % Use polMat2TimexKmz.m to write kmz. See that function for kmz generation parameters.
+doWriteBfKmz            = false;  % Apply bilateral filter before creating a second kmz.
 
-%% Test if kmz is patched?
-doEnsureKmzPatched      = false;
+%% Test if kmz is patched so that DrawOrder=10
+doEnsureKmzPatched      = false;  % Only relevant to CTR kmz's
 
-%% What to redo?
-doReprocessCube         = false;
+%% What to redo? (true to overwrite)
+doReprocessCube         = false;   
 doOverwriteKmz          = false;
 doOverwriteBfKmz        = false;
 
-%% Process only these folders
+%% Process only these folders (leave empty array if processing all day-folders)
 folderList = [];
 %               '2017-06-07',...
 %               '2017-06-08',...
@@ -30,22 +33,20 @@ goBackwardInTime = false;
 % elseif isunix
 %     scrDir = '/nfs/attic/hallerm/RADAR_DATA/CTR/scripts';
 % end
-addpath(genpath(fileparts(pwd)));
+addpath(genpath(fileparts(pwd))); % Assume that this script is being called from the script's folder
 % addpath(genpath(scrDir))
 
 %% Where to read and write data?
 % On Dell:
-baseDir = 'D:\processed';
-% baseDir = 'C:\Data\CTR\DAQ-data';
+baseDir = 'D:\guadalupe\'; %/path/to/parent/directory
 % baseDir = '/data';
 
 % Data directory
 % cubeDir = 'E:\Data\CTR\DAQ-data\processed\';
-cubeDir = fullfile(baseDir,'guadTest');
+cubeDir = fullfile(baseDir,'processed'); %/path/to/parent/of/day-folders
 
 % Save intensity kmz directory
-% SAve to same folder as cube
-kmzSaveDir = fullfile(baseDir,'postprocessed','kmz');
+kmzSaveDir = fullfile(baseDir,'postprocessed','kmz'); %/path/to/kmz/directory
 if ~exist(kmzSaveDir,'dir'); mkdir(kmzSaveDir); end
 
 % Save edge filtered kmz directory
@@ -56,8 +57,9 @@ if doWriteBfKmz
 end
 
 
-
-%% Start Processing
+%%%%%%%%%%%%%%%%%%%%%%
+%% Start Processing %%
+%%%%%%%%%%%%%%%%%%%%%%
 
 % Read in data
 dayFolder = dir(fullfile(cubeDir,'2017*'));
@@ -140,7 +142,7 @@ for iDay = dayVec
 
 
 
-                %% This is hardcoded for 720 Azimuths
+                %% This is hardcoded for 361 Azimuths
                 load(cubeName,'Azi');
                 nAzi = length(Azi);
                 if nAzi == 361

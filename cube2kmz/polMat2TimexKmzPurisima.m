@@ -1,4 +1,4 @@
-function polMat2TimexKmz(cubeName,kmzName,doBilateralFilter)
+function polMat2TimexKmzPurisima(cubeName,kmzName,doBilateralFilter)
 %
 % This function reads a radar cube (e.g. Cube = load(cubeName);) and writes
 % a KMZ file of the cube's temporal mean (i.e. "timex").
@@ -29,7 +29,7 @@ radarLatitude      = [];%41.271735; %41.271747; % Leave blank [] to use UTM coor
 radarLongitude     = [];%-72.343475; % Leave blank [] to use UTM coordinates in Cube.results
 heading            = [];%282.5;         % If cube's internal heading is wrong, apply this heading instead
 maxHeading         = 359;         % Set maximum heading value (clockwise from North) for footprint
-rangeDecimation    = 5;           % Decimate ranges by this factor to speed up interpolation to Cartesian
+rangeDecimation    = 2;           % Decimate ranges by this factor to speed up interpolation to Cartesian
 cartGrid_dx        = 15;          % kmz requires cartesian grid - this is spatial resolution
 cartGrid_dy        = 15;          % kmz requires cartesian grid - this is spatial resolution
 colorAxisLimits    = [0 225];    % caxis
