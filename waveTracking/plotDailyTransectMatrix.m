@@ -25,7 +25,7 @@ times = times-7/24;
 
 fig3=figure;
 hold on
-pcolor(plotRG,plotDN,transectMatrix(:,380:923))
+pcolor(plotRG,plotDN,transectMatrix)
 shading flat
 % colormap hot
 datetick('y','mm/dd HH:MM')
