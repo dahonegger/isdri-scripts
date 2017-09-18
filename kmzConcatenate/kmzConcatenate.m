@@ -38,10 +38,11 @@ end
 
 % Create temp folders and file
 tmpID = randi(1e4,1);
-tmpWriteFolder = sprintf('tempFolder%05.f-w',tmpID);
+nowID = datestr(now,'yyyymmddTHHMMSS');
+tmpWriteFolder = sprintf('tempFolder%05.f_%s-w',tmpID,nowID);
     mkdir(tmpWriteFolder)
     mkdir(fullfile(tmpWriteFolder,'files'))
-tmpReadFolder = sprintf('tempFolder%05.f-r',tmpID);
+tmpReadFolder = sprintf('tempFolder%05.f_%s-r',tmpID,nowID);
     mkdir(tmpReadFolder)
 tmpFile = 'doc.kml';
     fid = fopen(fullfile(tmpWriteFolder,tmpFile),'w');
