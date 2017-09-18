@@ -1,8 +1,8 @@
 %% Get Files
-scrDir = fullfile('C:','Data','isdri','isdri-scripts');
+scrDir = fullfile('/nfs','depot','cce_u1','haller','shared','RADAR_DATA','ISDRI','isdri-scripts');
 % scrDir = fullfile(depotDir,'haller','shared','honegger','radar','usrs','connecticut','ctr-scripts');
 % inputDir = fullfile(atticDir,'hallerm','RADAR_DATA','CTR','site_push','kmz',filesep);
-inputDir = fullfile('D:','processed','postprocessed','kmz',filesep);
+inputDir = fullfile('/nfs','attic','hallerm2','isdri','guadalupe','site_push','kmz');
 
 addpath(genpath(scrDir));
 files = getFiles(inputDir);
