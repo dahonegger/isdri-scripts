@@ -1,9 +1,5 @@
 function cube2png_guadalupe_enviro(cubeFile,pngFile)
 % Originally 'cube2timex.m' by David Honegger 
-% Updated by Alex Simpson to show tide, wind, discharge data
-% Updated by Annika O'Dea to show waves instead of discharge data
-
-% Originally 'cube2timex.m' by David Honegger 
 % Updated by Alex Simpson to show tide, wind, discharge data 
 % Updated by Annika O'Dea to show waves instead of discharge at the
 % Guadalupe Dunes site

@@ -1,9 +1,6 @@
-% batch file to make enviro PNGs. 
-% updated 9/17/2017 for ISDRI Guadalupe data
-
 
 %% USER INPUTS
-% add paths to ISDRI HUB Support Data and GitHub Repository
+% add paths to CTR HUB Support Data and GitHub Repository
 
 % SUPPORT DATA PATH
 supportDataPath = 'D:\Data\ISDRI\SupportData'; % LENOVO HARD DRIVE
@@ -13,10 +10,9 @@ supportDataPath = 'D:\Data\ISDRI\SupportData'; % LENOVO HARD DRIVE
 addpath(genpath('C:\Data\ISDRI\isdri-scripts')) %GITHUB REPOSITORY
 
 % MAT FILES LOCATION
-baseDir = 'E:\guadalupe\processed\'; %CTR HUB
+baseDir = 'E:\guadalupe\processed\'; % HUB 1
 
 % PNG LOCATION
-% saveDir = 'E:\PNGs\timex_enviroInfo5\'; % CTR HUB
 saveDir = 'C:\Data\ISDRI\postprocessed\timex_enviroInfo\'; % LENOVO HARD DRIVE
 
 % rewrite existing files in save directory? true=yes
@@ -24,6 +20,7 @@ doOverwrite = false;
 
 % Download new support data files?
 downloadWind = true;
+downloadWaves = true;
 
 %% Prep files
 % make save directory
@@ -35,6 +32,8 @@ dayFolder = dir([baseDir,'2017*']);
 % download environmental files
 % WIND: buoy number, save directory, save fname
 if downloadWind;fetchWindNDBC(46011,fullfile(supportDataPath,'Wind'),'MetData_NDBC46011.txt'); end 
+% WAVES: save directory, save fname 
+if downloadWaves; fetchWavesNDBC(46011,fullfile(supportDataPath,'Waves'),'WaveData_NDBC46011.txt');end
 
 %% Process Files 
 imgId = 1;
@@ -63,7 +62,7 @@ for iDay = 1:length(dayFolder)
             else
                 fprintf('%s ...',cubeBaseName)
 %                 try
-                    cube2png_guadalupe(cubeName,pngName)
+                    cube2png_guadalupe_enviro(cubeName,pngName)
                     fprintf('Done.\n')
 %                 catch
 %                     fid = fopen(['FAILED_on_file_',pngBaseName,'.txt'], 'wt' );
