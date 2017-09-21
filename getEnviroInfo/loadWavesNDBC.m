@@ -14,7 +14,7 @@ function [dnWaves,Hs,dirWaves] = loadWavesNDBC(fname)
 % Adapted for wave data by Annika O'Dea 9/17/2107
 
 fid=fopen(fname);
-for i = 1:30
+for i = 1:2
     [~] = fgetl(fid);
 end
 tline = fgetl(fid);

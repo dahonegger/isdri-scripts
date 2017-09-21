@@ -62,10 +62,7 @@ nowTime = epoch2Matlab(nanmean(timeInt(:))); % UTC
 [dnWaves,Hs,dirWaves] = loadWavesNDBC('WaveData_NDBC46011.txt');
 
 % Load tide data from tide station file
-load('D:\Data\ISDRI\SupportData\Tides\waterLevel_9411496.mat');
-dnTides = waterLevel(:,1); waterSurfaceElevation = waterLevel(:,2);
-
-% Remove -999
+[dnTides,waterSurfaceElevation] = loadTidesNOAA('TideData_NOAA9411406.txt');
 waterSurfaceElevation(waterSurfaceElevation == -999) = nan;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Plot! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -158,7 +155,7 @@ ylim([0 4])
 set(axWaves,'xtick',fix([nowTime-4:nowTime+4]))
 set(axWaves,'xticklabel','')   
 datetick('x','mmm-dd','keeplimits','keepticks')    
-hy1 = ylabel('Waves [m$^3$/s]','fontsize',11,'interpreter','latex');
+hy1 = ylabel('Hs [m]','fontsize',11,'interpreter','latex');
 tmp1 = get(hy1,'position');
 set(hy1,'position',[tmp1(1)+1/50 tmp1(2:3)])
 axWaves.TickLabelInterpreter = 'latex';
