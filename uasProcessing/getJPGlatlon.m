@@ -1,4 +1,5 @@
-imData = imfinfo('DJI_0042.JPG');
+function [Lat,Lon,Time] = getJPGlatlon(fname);
+    imData = imfinfo(fname);
 
 Lat = dms2degrees(imData.GPSInfo.GPSLatitude);
 if strcmp(imData.GPSInfo.GPSLatitudeRef,'S');

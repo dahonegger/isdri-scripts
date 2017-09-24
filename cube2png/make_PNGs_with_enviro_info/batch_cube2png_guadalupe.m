@@ -21,6 +21,7 @@ doOverwrite = false;
 % Download new support data files?
 downloadWind = true;
 downloadWaves = true;
+downloadTides = true;
 
 %% Prep files
 % make save directory
@@ -34,6 +35,9 @@ dayFolder = dir([baseDir,'2017*']);
 if downloadWind;fetchWindNDBC(46011,fullfile(supportDataPath,'Wind'),'MetData_NDBC46011.txt'); end 
 % WAVES: save directory, save fname 
 if downloadWaves; fetchWavesNDBC(46011,fullfile(supportDataPath,'Waves'),'WaveData_NDBC46011.txt');end
+% TIDES: save directory, save fname 
+endTime = '20170920'; startTime = '20170829';
+if downloadTides; fetchTidesNOAA(9411406,fullfile(supportDataPath,'Tides'),'TideData_NOAA9411406.txt',startTime,endTime);end
 
 %% Process Files 
 imgId = 1;

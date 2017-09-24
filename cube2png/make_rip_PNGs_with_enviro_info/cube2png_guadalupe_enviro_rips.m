@@ -40,13 +40,13 @@ yC = -1200:-500;
 [XX,YY] = meshgrid(yC,xC);
 [thC,rgC] = cart2pol(XX,YY);
 aziC = wrapTo360(90 - thC*180/pi - heading);
-scanClipped = double(timex(16:668,:));
-tC = interp2(AZI,RG,scanClipped,aziC',rgC');
+tC = interp2(AZI,RG,double(timex(16:668,:)),aziC',rgC');
 
 nowTime = epoch2Matlab(nanmean(timeInt(:))); % UTC
 
 % Load wind data from wind station file
 [dnWind,magWind,dirWind] = loadWindNDBC('MetData_NDBC46011.txt', nowTime);
+dirWindR = dirWind - rotation; % rotate wind to be consistent with rotated domain
 
 % Load wave data from wave station file
 [dnWaves,Hs,dirWaves] = loadWavesNDBC('WaveData_NDBC46011.txt');
@@ -124,9 +124,9 @@ ycircle = sin(th);
 plot(axWind,xcircle,ycircle,'-k','linewidth',1.25);hold on
 % plot(axWind,.75*xcircle,.75*ycircle,'-','color',[.5 .5 .5],'linewidth',1.25)
 axis image;axis([-1.05 1.05 -1.05 1.05])
-[uWind vWind] = pol2cart((90-dirWind)*pi/180, 1); 
+[uWind vWind] = pol2cart((90-dirWindR)*pi/180, 1); 
 arrow([uWind vWind],[0 0],'baseangle',45,'width',magWind,'tipangle',25,'facecolor','red','edgecolor','red');
-[uText vText] = pol2cart((90-180-dirWind)*pi/180,0.28); %position text off tip of arrow
+[uText vText] = pol2cart((90-180-dirWindR)*pi/180,0.28); %position text off tip of arrow
 text(uText,vText,[num2str(round(magWind,1)),' m/s'],'horizontalalignment','center','interpreter','latex')
 set(axWind,'xtick',[],'ytick',[],'xcolor','w','ycolor','w')
 title('Wind','fontsize',14,'interpreter','latex')

@@ -1,4 +1,4 @@
-% makeDailyTransectMatrix.m 
+% makeDailyTransectMatrix_RFalloff.m 
 % Makes daily matrices of a single cross-shore intensity transect
 % 9/21/2017
 
@@ -23,12 +23,13 @@ dayFolder = dir([baseDir,'2017*']);
 dayFolderSave = dir([saveDir,'2017*']);
 
 %initialize variables
-txIMat = [];
-txDn = [];
+txIMat = []; txIMat_RI = [];
+txDn = [];  txRFO = [];
+txR2 = [];
 
 %% loop through mat files
 numDays = numel(dayFolder)-numel(dayFolderSave);
-for iDay = 2+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
+for iDay = 3+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
     dayFolder(iDay).polRun = dir(fullfile(baseDir,dayFolder(iDay).name,'*_pol.mat'));
     output_fname =   num2str(dayFolder(iDay).name);
     
@@ -39,25 +40,28 @@ for iDay = 2+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
         
         %% LOAD TIMEX
         load(cubeName,'Azi','Rg','timex','timeInt','results');
-        
-        [rangeFalloff, r2] = findRangeFalloff(timex, Rg, Azi);
+        rangeFalloff = findRangeFalloff(timex, Rg, Azi);
         
         % handle the 512 rotation collections: turn into 64 rot averages
         if (epoch2Matlab(timeInt(numel(timeInt)))-epoch2Matlab(timeInt(1))).*24.*60.*60 > 120
             load(cubeName,'data')
+             clear rangeFalloff
             for i = 1:8
                 tmp = data(:,:,((i-1)*64)+1:i*64);
-                timexCell{i} = double(mean(tmp,3));
+                timexCell{i} = double(mean(tmp,3));    
+                rf = findRangeFalloff(timexCell{i},Rg,Azi);
+                rangeFalloff(:,i) = findRangeFalloff(timexCell{i},Rg,Azi);
+                
             end
         else
         end
         
-        % in case timex variable doesn't exist
-        if ~exist('timex','var') || isempty(timex)
-            load(cubeName,'data')
-            timex = double(mean(data,3));
-        else
-        end
+%         % in case timex variable doesn't exist
+%         if ~exist('timex','var') || isempty(timex)
+%             load(cubeName,'data')
+%             timex = double(mean(data,3));
+%         else
+%         end
         
         [AZI,RG] = meshgrid(Azi,Rg);
         TH = pi/180*(90-AZI-results.heading);
@@ -72,14 +76,20 @@ for iDay = 2+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
         
         if (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 < 120
             txI = double(timex(:,idx));
+%             txI_RI = txI(334:end) - rangeFalloff;
             txIMat = horzcat(txIMat,txI);
+%             txIMat_RI = horzcat(txIMat_RI,txI_RI);
             txDn = horzcat(txDn,mean(epoch2Matlab(timeInt(:))));
+            txRFO = horzcat(txRFO,rangeFalloff);
             
         elseif (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 > 120
             for ii = 1:8
                 txI = timexCell{ii}(:,idx);
+%                 txI_RI = txI(334:end) - rangeFalloff;
                 txIMat = horzcat(txIMat,txI);
+%                 txIMat_RI = horzcat(txIMat_RI,txI_RI);
                 txDn = horzcat(txDn, epoch2Matlab(mean(timeInt(1,((ii-1)*64 + 1):((ii)*64)))));
+                txRFO = horzcat(txRFO,rangeFalloff(:,ii));
             end
         end
         
@@ -88,9 +98,9 @@ for iDay = 2+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
         
     end
     
-    save(fullfile(saveDir,output_fname),'txIMat','txDn','Rg','txLon','txLat','-v7.3')
+    save(fullfile(saveDir,output_fname),'txIMat','txDn','Rg','txLon','txLat','txRFO','-v7.3')
     
     disp([num2str(iRun),' of ', num2str(length(dayFolder(iDay).polRun)),' run. ',num2str(iDay),' of ',num2str(length(dayFolder)),' day.'])
     clearvars -except baseDir saveDir desiredStartAngle dayFolder dayFolderSave numDays
-    txIMat = []; txDn = [];   
+    txIMat = []; txDn = []; txRFO = [];
 end

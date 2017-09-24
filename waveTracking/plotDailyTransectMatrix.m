@@ -1,3 +1,6 @@
+% plotDailyTransectMatrix.m
+% 9/22/2017
+
 clear all; close all; 
 
 baseDir = 'E:\guadalupe\postprocessed\dailyTransectMatrix\';
