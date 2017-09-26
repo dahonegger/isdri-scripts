@@ -105,22 +105,19 @@ for iDay = 3+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
 %                 txIMat_RI = horzcat(txIMat_RI,txI_RI);
                 txDn = horzcat(txDn, epoch2Matlab(mean(timeInt(1,((ii-1)*64 + 1):((ii)*64)))));
                 txRFO = horzcat(txRFO,rangeFalloff(:,ii));
-                clear txI
             end
         elseif (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 > 1000
             for ii = 1:(floor(size(data,3)/64)-1)
-                txI = timexCell{ii}(:,idx);
-                txIMat = horzcat(txIMat,txI);
-                txDn = horzcat(txDn, epoch2Matlab(mean(timeInt(1,((ii-1)*64 + 1):((ii)*64)))));
-                txRFO = horzcat(txRFO,rangeFalloff(:,ii));
-                clear txI
-               
+                tmp = data(:,:,((ii-1)*64)+1:ii*64);
+                timexCell{ii} = double(mean(tmp,3));
+                rf = findRangeFalloff(timexCell{ii},Rg,Azi);
+                rangeFalloff(:,ii) = findRangeFalloff(timexCell{ii},Rg,Azi);
+                clear tmp
             end
-            txI = timexCell{ii}(:,idx);
-            txIMat = horzcat(txIMat,txI);
-            txDn = horzcat(txDn, epoch2Matlab(mean(timeInt(1,((ii-1)*64 + 1):((ii)*64)))));
-            txRFO = horzcat(txRFO,rangeFalloff(:,ii));
-            clear txI
+            tmp = data(:,:,((floor(size(data,3)/64)-1)*64):end);
+            timexCell{floor(size(data,3)/64)} = double(mean(tmp,3));
+            rf = findRangeFalloff(timexCell{floor(size(data,3)/64)},Rg,Azi);
+            rangeFalloff(:,floor(size(data,3)/64)) = findRangeFalloff(timexCell{floor(size(data,3)/64)},Rg,Azi);
         end
         
         txLon = lon(:,idx);

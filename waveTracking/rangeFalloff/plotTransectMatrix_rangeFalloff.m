@@ -3,9 +3,9 @@
 
 clear all; close all; 
 
-startTime = '20170902_1900';
-endTime = '20170902_2255';
-baseDir = 'F:\guadalupe\postprocessed\dailyTransectMatrix\falloffCorrected\';
+startTime = '20170921_1800';
+endTime = '20170922_0700';
+baseDir = 'E:\guadalupe\postprocessed\dailyTransectMatrix\falloffCorrected\';
 
 if strcmp(startTime(7:8),endTime(7:8))
     fn{1} = [baseDir startTime(1:4) '-' startTime(5:6) '-' startTime(7:8) '.mat'];

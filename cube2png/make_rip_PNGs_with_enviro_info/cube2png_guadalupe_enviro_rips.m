@@ -6,7 +6,7 @@ function cube2png_guadalupe_enviro_rips(cubeFile,pngFile)
 % 9/19/2017
 
 % User options: leave empty [] for Matlab auto-sets
-colorAxLimits           = [50 220]; % This gets updated for bad data periods (~May 28-30)
+colorAxLimits           = [10 220]; % This gets updated for bad data periods (~May 28-30)
 axisLimits              = [-1200 -500 -800 800]; % Full, In kilometers
 plottingDecimation      = [5 1]; % For faster plotting, make this [2 1] or higher
 
@@ -42,6 +42,15 @@ yC = -1200:-500;
 aziC = wrapTo360(90 - thC*180/pi - heading);
 tC = interp2(AZI,RG,double(timex(16:668,:)),aziC',rgC');
 
+% find coordinates of MacMahan instruments
+latJM = [34.9826 34.981519 34.981131 34.980439 34.98035 34.985969];
+lonJM = [-120.657311 -120.651639 -120.650239 -120.647881...
+    -120.651719 -120.650319];
+
+ [yUTM, xUTM] = ll2UTM(latJM,lonJM);
+ X = xUTM - results.XOrigin;
+ Y = yUTM - results.YOrigin;
+ 
 nowTime = epoch2Matlab(nanmean(timeInt(:))); % UTC
 
 % Load wind data from wind station file
@@ -76,6 +85,7 @@ hold on
 shading interp
 axis image
 colormap(hot)
+plot(X,Y,'b.','MarkerSize',20)
 if ~isempty(axisLimits)
 axis(axisLimits)
 end
