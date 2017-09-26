@@ -26,15 +26,17 @@ dayFolderSave = dir([saveDir,'2017*']);
 txIMat = []; txIMat_RI = [];
 txDn = [];  txRFO = [];
 txR2 = [];
+txIMat28 = []; txDN28 = []; txRFO28 = [];
 
 %% loop through mat files
 numDays = numel(dayFolder)-numel(dayFolderSave);
-for iDay = 3+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
+% for iDay = 3+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
+for iDay = 2+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
     dayFolder(iDay).polRun = dir(fullfile(baseDir,dayFolder(iDay).name,'*_pol.mat'));
     output_fname =   num2str(dayFolder(iDay).name);
     
     %% loop through all runs for this day
-    for iRun = 1:1:length(dayFolder(iDay).polRun) %loop through files
+    for iRun = 213:1:length(dayFolder(iDay).polRun) %loop through files
         
         cubeName = fullfile(baseDir,dayFolder(iDay).name,dayFolder(iDay).polRun(iRun).name);
         
@@ -43,7 +45,8 @@ for iDay = 3+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
         rangeFalloff = findRangeFalloff(timex, Rg, Azi);
         
         % handle the 512 rotation collections: turn into 64 rot averages
-        if (epoch2Matlab(timeInt(numel(timeInt)))-epoch2Matlab(timeInt(1))).*24.*60.*60 > 120
+        if (epoch2Matlab(timeInt(numel(timeInt)))-epoch2Matlab(timeInt(1))).*24.*60.*60 > 150 && ...
+                (epoch2Matlab(timeInt(numel(timeInt)))-epoch2Matlab(timeInt(1))).*24.*60.*60 < 1000
             load(cubeName,'data')
              clear rangeFalloff
             for i = 1:8
@@ -88,7 +91,7 @@ for iDay = 3+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
         % grab these angles from intensity
         [idx idx] = min(abs(THdeg(1,:) - desiredStartAngle));
         
-        if (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 < 120
+        if (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 < 150
             txI = double(timex(:,idx));
 %             txI_RI = txI(334:end) - rangeFalloff;
             txIMat = horzcat(txIMat,txI);
@@ -96,7 +99,7 @@ for iDay = 3+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
             txDn = horzcat(txDn,mean(epoch2Matlab(timeInt(:))));
             txRFO = horzcat(txRFO,rangeFalloff);
             
-        elseif (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 > 120 && ...
+        elseif (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 > 150 && ...
             (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 < 1000
             for ii = 1:8
                 txI = timexCell{ii}(:,idx);
@@ -109,17 +112,17 @@ for iDay = 3+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
             end
         elseif (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 > 1000
             for ii = 1:(floor(size(data,3)/64)-1)
-                txI = timexCell{ii}(:,idx);
-                txIMat = horzcat(txIMat,txI);
-                txDn = horzcat(txDn, epoch2Matlab(mean(timeInt(1,((ii-1)*64 + 1):((ii)*64)))));
-                txRFO = horzcat(txRFO,rangeFalloff(:,ii));
+                txI28 = timexCell{ii}(:,idx);
+                txIMat28 = horzcat(txIMat28,txI28);
+                txDn28 = horzcat(txDn28, epoch2Matlab(mean(timeInt(1,((ii-1)*64 + 1):((ii)*64)))));
+                txRFO28 = horzcat(txRFO28,rangeFalloff(:,ii));
                 clear txI
                
             end
-            txI = timexCell{ii}(:,idx);
-            txIMat = horzcat(txIMat,txI);
-            txDn = horzcat(txDn, epoch2Matlab(mean(timeInt(1,((ii-1)*64 + 1):((ii)*64)))));
-            txRFO = horzcat(txRFO,rangeFalloff(:,ii));
+            txI28 = timexCell{floor(size(data,3)/64)}(:,idx);
+            txIMat28 = horzcat(txIMat28,txI28);
+            txDn28 = horzcat(txDn28, epoch2Matlab(mean(timeInt(1,floor(size(data,3)/64):end))));
+            txRFO28 = horzcat(txRFO28,rangeFalloff(:,floor(size(data,3)/64)));
             clear txI
         end
         
@@ -132,5 +135,5 @@ for iDay = 3+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
     
     disp([num2str(iRun),' of ', num2str(length(dayFolder(iDay).polRun)),' run. ',num2str(iDay),' of ',num2str(length(dayFolder)),' day.'])
     clearvars -except baseDir saveDir desiredStartAngle dayFolder dayFolderSave numDays
-    txIMat = []; txDn = []; txRFO = [];
+    txIMat = []; txDn = []; txRFO = []; txIMat28 = []; txDn28 = []; txRFO28 = [];
 end
