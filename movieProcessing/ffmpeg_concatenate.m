@@ -1,5 +1,5 @@
 function [vid_outpath, ffmpeg_output, ffmpeg_exitcode] = ...
-    ffmpeg_speedup(vid_inpath, speed, vid_outpath, varargin)
+    ffmpeg_speedup(vid1_inpath, vid2_inpath, vid_outpath, varargin)
 % FFMPEG_SPEEDUP
 % Use ffmpeg to speed up a video file (ffmpeg must support reading and
 %  writing the codec used for the file)
@@ -35,8 +35,9 @@ function [vid_outpath, ffmpeg_output, ffmpeg_exitcode] = ...
 %
 
 ffmpeg_bin = 'C:\ffmpeg\current\bin\ffmpeg.exe';
-speed = round(speed*10)/10;  % Nearest 0.1
-[vid_dir, vid_name, vid_ext] = fileparts(vid_inpath);
+% speed = round(speed*10)/10;  % Nearest 0.1
+[vid1_dir, vid1_name, vid1_ext] = fileparts(vid1_inpath);
+[vid2_dir, vid2_name, vid2_ext] = fileparts(vid2_inpath);
 if nargin < 3 || isempty(vid_outpath)
     vid_outpath = fullfile(vid_dir, ...
         sprintf('%s_%gx%s', vid_name, speed, vid_ext));
@@ -58,15 +59,23 @@ if ~isempty(varargin)
         end
     end
 end
+
+% generate file list
+fid = fopen('vidList.txt','w');
+fprintf(fid,'%s%c%s%c\r\n','file ','''',vid1_inpath,'''');
+fprintf(fid,'%s%c%s%c\r\n','file ','''',vid2_inpath,'''');
+fclose(fid)
+
 % Command is as follows:
 % ffmpeg -y -i "<inpath>" [-r <fps>] -filter:v
+% ffmpeg -f concat -safe 0 -i mylist.txt -c copy output
 %     "setpts=<1/speed>*PTS,scale="<resolution>" "<outpath>"
 % 
 % -y means always overwrite
 % default is to keep the same fps as the input file
 % -1 in the resolution spec preserves aspect ratio
 ffmpeg_command = sprintf( ...
-    '"%s" -y -i "%s"%s -filter:v "setpts=%0.4f*PTS,scale=%s" "%s"', ...
-    ffmpeg_bin, vid_inpath, fps_str, 1/speed, resolution, vid_outpath);
+    '"%s" -f concat -safe 0 -i vidList.txt -c copy "%s"', ...
+    ffmpeg_bin, vid_outpath);
 
 [ffmpeg_exitcode, ffmpeg_output] = system(ffmpeg_command, '-echo');
