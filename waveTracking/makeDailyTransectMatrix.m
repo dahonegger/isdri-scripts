@@ -6,12 +6,12 @@ close all; clear all;
 
 %% User inputs
 % add paths to ISDRI HUB Support Data and GitHub Repository
-addpath(genpath('F:\guadalupe\processed')) %CTR HUB
+addpath(genpath('E:\guadalupe\processed')) %CTR HUB
 addpath(genpath('C:\Data\ISDRI\isdri-scripts')) %github repository
 
 % add path to mat files and choose directory for png's
-baseDir = 'F:\guadalupe\processed\';
-saveDir = 'F:\guadalupe\postprocessed\dailyTransectMatrix\falloffCorrected\';
+baseDir = 'E:\guadalupe\processed\';
+saveDir = 'E:\guadalupe\postprocessed\dailyTransectMatrix\';
 
 % choose degrees for transect
 desiredStartAngle = 270;
@@ -40,7 +40,7 @@ for iDay = 2+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
         %% LOAD TIMEX
         load(cubeName,'Azi','Rg','timex','timeInt','results');
         
-        [rangeFalloff, r2] = findRangeFalloff(timex, Rg, Azi);
+%         [rangeFalloff, r2] = findRangeFalloff(timex, Rg, Azi);
         
         % handle the 512 rotation collections: turn into 64 rot averages
         if (epoch2Matlab(timeInt(numel(timeInt)))-epoch2Matlab(timeInt(1))).*24.*60.*60 > 120

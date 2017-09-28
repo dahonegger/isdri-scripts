@@ -1,12 +1,16 @@
-% plotDailyTransectMatrix.m
-% 9/27/2017
+% plotDailyTransectMatrix_withBathy.m
+% 9/26/2017
 
 clear all; close all; 
 
-% times in UTC
-startTime = '20170915_1400';
-endTime = '20170916_1330';
+
+startTime = '20170921_1800';
+endTime = '20170922_0700';
 baseDir = 'E:\guadalupe\postprocessed\dailyTransectMatrix\';
+
+contour100_lat = ; contour100_lon = ;
+contour50_lat = ; contour50_lon = ;
+contour30_lat = ; contour30_lon = ;
 
 if strcmp(startTime(7:8),endTime(7:8))
     fn{1} = [baseDir startTime(1:4) '-' startTime(5:6) '-' startTime(7:8) '.mat'];
@@ -23,7 +27,7 @@ dnEnd = datenum([str2num(endTime(1:4)) str2num(endTime(5:6)) str2num(endTime(7:8
 % Load transects
 transectMatrix = []; timesAll = []; txLon_full = []; txLat_full = [];
 for i = 1:numel(fn)
-    load(fn{i})
+    load(fn{1})
     transectMatrix = horzcat(transectMatrix,txIMat);
     txLon_full = horzcat(txLon_full,txLon);
     txLat_full = horzcat(txLat_full,txLat);
@@ -42,22 +46,15 @@ shading flat
 %% Plot transect
 fig3=figure;
 hold on
-pcolor(times,txLon',transectMatrix)
+pcolor(times,Rg,transectMatrix)
 shading flat
 colormap hot
-datetick('x','mm/dd HH:MM','keepticks')
-set(gca,'Ydir','reverse')
+datetick('x','mm/dd HH:MM')
 xlabel('Time [UTC]')
 ylabel('X [m]')
-% xlim([0 11000])
+xlim([0 11000])
 axis tight
 hold on
-
-%% add contour locations
-contours = load([baseDir 'contour_pts.mat']);
-plot([dn1,dnEnd],[contours.cont30.Position(1) contours.cont30.Position(1)])
-plot([dn1,dnEnd],[contours.cont50.Position(1) contours.cont50.Position(1)])
-% plot([dn1,dnEnd],[contours.cont100.Position(1) contours.cont100.Position(1)])
 
 %%
 % [x y] = ginput(10); 
