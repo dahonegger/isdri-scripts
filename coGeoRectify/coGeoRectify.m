@@ -16,7 +16,7 @@ function Cube = coGeoRectify(Cube,controlCubeName,doOverwrite)
 %
 % 2017-05-31 David Honegger
 %
- dbug = false;
+ dbug = true;
 
 if nargin<2
     controlCubeName = 'geoRefTimex.mat';
@@ -109,6 +109,7 @@ if dbug
     plot(lags,rMean,'.-k')
     hold on
     plot([headingOffset headingOffset],ax.YLim,'-r')
+    drawnow
 end
     
 % If lag~=0, interpolate test frame to control grid
