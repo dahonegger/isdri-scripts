@@ -1,12 +1,12 @@
 % plotDailyTransectMatrix.m
 % 9/22/2017
 
-clear all; close all; 
+clear all; %close all; 
 
 
 startTime = '20170921_1800';
-endTime = '20170922_0700';
-baseDir = 'E:\guadalupe\postprocessed\dailyTransectMatrix\';
+endTime = '20170922_1200';
+baseDir = 'E:\guadalupe\postprocessed\dailyTransectMatrix\falloffCorrected\';
 
 if strcmp(startTime(7:8),endTime(7:8))
     fn{1} = [baseDir startTime(1:4) '-' startTime(5:6) '-' startTime(7:8) '.mat'];
@@ -23,7 +23,7 @@ dnEnd = datenum([str2num(endTime(1:4)) str2num(endTime(5:6)) str2num(endTime(7:8
 % Load transects
 transectMatrix = []; timesAll = []; txLon_full = []; txLat_full = [];
 for i = 1:numel(fn)
-    load(fn{1})
+    load(fn{i})
     transectMatrix = horzcat(transectMatrix,txIMat);
     txLon_full = horzcat(txLon_full,txLon);
     txLat_full = horzcat(txLat_full,txLat);

@@ -4,7 +4,7 @@
 clear all; close all; 
 
 startTime = '20170921_1800';
-endTime = '20170922_0700';
+endTime = '20170922_1200';
 baseDir = 'E:\guadalupe\postprocessed\dailyTransectMatrix\falloffCorrected\';
 
 if strcmp(startTime(7:8),endTime(7:8))
@@ -20,59 +20,60 @@ dnEnd = datenum([str2num(endTime(1:4)) str2num(endTime(5:6)) str2num(endTime(7:8
     str2num(endTime(10:11)) str2num(endTime(12:13)) 0]);
 
 % Load transects
-transectMatrix = []; timesAll = []; txLon_full = []; txLat_full = []; txRFO = [];
+transectMatrix = []; timesAll = []; txLon_full = []; txLat_full = []; txRFO_full = [];
 for i = 1:numel(fn)
-    load(fn{1})
+    load(fn{i})
     transectMatrix = horzcat(transectMatrix,txIMat);
     txLon_full = horzcat(txLon_full,txLon);
     txLat_full = horzcat(txLat_full,txLat);
     timesAll = horzcat(timesAll,txDn);
-    txRFO = horzcat(txRFO,txRFO);
+    txRFO_full = horzcat(txRFO_full,txRFO);
 end
 times = timesAll(timesAll>dn1 & timesAll<dnEnd);
 transectMatrix = transectMatrix(:,timesAll>dn1 & timesAll<dnEnd);
-txRFO = txRFO(:,timesAll>dn1 & timesAll<dnEnd);
+txRFO = txRFO_full(:,timesAll>dn1 & timesAll<dnEnd);
 
 % subtract off mean
 transectMatrix_RI = transectMatrix(334:end,:) - txRFO;
 
-% find edge
-[edges,threshOut] = edge(transectMatrix_RI,'canny');
-edges2 = edge(transectMatrix_RI, 'canny', [threshOut(1)*6, threshOut(2)*6]);
+% % find edge
+% [edges,threshOut] = edge(transectMatrix_RI,'canny');
+% edges2 = edge(transectMatrix_RI, 'canny', [threshOut(1)*6, threshOut(2)*6]);
+% 
+% edges0 = abs(edges2 - 1);
+% edgesTest = edges0;
+% for j = 1:size(edges0,2)
+%     for i = 1:size(edges0,1)-1
+%         if edges0(i+1,j) == 1 && edges0(i,j) == 0
+%             edgesTest(i+1,j) = nan;
+%         end
+%     end
+% end
+% edgesTest(isnan(edgesTest)) = 0;
 
-edges0 = abs(edges2 - 1);
-edgesTest = edges0;
-for j = 1:size(edges0,2)
-    for i = 1:size(edges0,1)-1
-        if edges0(i+1,j) == 1 && edges0(i,j) == 0
-            edgesTest(i+1,j) = nan;
-        end
-    end
-end
-edgesTest(isnan(edgesTest)) = 0;
+% [Y2,iWave] = shortestPathStep2(edgesTest,1);
 
-[Y2,iWave] = shortestPathStep2(edgesTest,1);
-
-figure,
-pcolor(times,Rg(334:end),edges0)
-hold on
-plot(times,Rg(iWave+333));
-shading flat
-
-
+% figure,
+% pcolor(times,Rg(334:end),edges0)
+% hold on
+% plot(times,Rg(iWave+333));
+% shading flat
 
 %% Plot transect
 fig3=figure;
 hold on
 pcolor(times,Rg(334:end),transectMatrix_RI)
-plot(times,Rg(333+iWave))
 shading flat
 colormap hot
 colorbar
-datetick('x','mm/dd HH:MM')
+datetick('x',15)
 xlabel('Time [UTC]')
 ylabel('X [m]')
 xlim([0 11000])
+ttl = [startTime(1:8) '-' startTime(10:13)... 
+    ' to ' endTime(1:8) '-' endTime(10:13) ' intensity timestack'];
+title(ttl)
+caxis([-30 30])
 axis tight
 hold on
 

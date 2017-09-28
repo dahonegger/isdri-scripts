@@ -45,7 +45,7 @@ if downloadTides; fetchTidesNOAA(9411406,fullfile(supportDataPath,'Tides'),'Tide
 [dnWind,magWind,dirWind] = loadWindNDBC('MetData_NDBC46011.txt');
 
 % Load wave data from wave station file
-[dnWaves,Hs,dirWaves] = loadWavesNDBC('WaveData_NDBC46011.txt');
+[dnWaves,Hs,dirWaves,TpAve,TpS] = loadWavesNDBC('WaveData_NDBC46011.txt');
 
 % Load tide data from tide station file
 [dnTides,waterSurfaceElevation] = loadTidesNOAA('TideData_NOAA9411406.txt');
@@ -63,7 +63,7 @@ tides_dnrips(ripVec ~= 1) = nan;
 
 %% load rip times
 figure,
-subplot(2,1,1)
+subplot(3,1,1)
 plot(dnTides,waterSurfaceElevation,'b')
 hold on
 % plot(dn,ripVec,'g.');
@@ -74,22 +74,25 @@ axis([min(dn) max(dn) -0.1 2])
 xlabel('WL (m)')
 title('Water Surface Elevation from MLLW (m)');
 
-% subplot(1,3,2)
-% plot(dnWind,waterSurfaceElevation)
-% hold on
-% plot(dn,ripVec,'go');
-% datetick('x')
-% xlabel('WL (m)')
-% title('Water Surface Elevation from MLLW (m)');
-
-subplot(2,1,2)
+ripVec(ripVec == 1) = 0.5;
+subplot(3,1,2)
 plot(dnWaves,Hs)
 hold on
-plot(dn,ripVec,'g.');
+plot(dn,ripVec,'go');
 datetick('x',7)
 axis([min(dn) max(dn) 0 4])
 xlabel('Hs (m)')
 title('Significant wave height (m)');
 
-
-
+ripVec(ripVec == 0.5) = 17;
+subplot(3,1,3)
+plot(dnWaves,TpS)
+hold on
+plot(dnWaves,TpAve)
+plot(dn,ripVec,'go');
+datetick('x')
+xlabel('Tp (s)')
+title('Wave period (m)');
+datetick('x',7)
+axis([min(dn) max(dn) 5 18])
+legend('Swell','Mean')

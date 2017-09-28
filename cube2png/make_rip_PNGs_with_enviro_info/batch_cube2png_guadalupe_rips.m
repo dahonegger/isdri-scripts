@@ -12,7 +12,7 @@ addpath(genpath('C:\Data\ISDRI\isdri-scripts')) %GITHUB REPOSITORY
 baseDir = 'E:\guadalupe\processed\'; % HUB 1
 
 % PNG LOCATION
-saveDir = 'C:\Data\ISDRI\postprocessed\ripCurrentTimex_with_Instruments'; % LENOVO HARD DRIVE
+saveDir = 'C:\Data\ISDRI\postprocessed\ripCurrentTimex_with_Instruments\'; % LENOVO HARD DRIVE
 
 % rewrite existing files in save directory? true=yes
 doOverwrite = false;

@@ -58,7 +58,7 @@ nowTime = epoch2Matlab(nanmean(timeInt(:))); % UTC
 dirWindR = dirWind - rotation; % rotate wind to be consistent with rotated domain
 
 % Load wave data from wave station file
-[dnWaves,Hs,dirWaves] = loadWavesNDBC('WaveData_NDBC46011.txt');
+[dnWaves,Hs,dirWaves,~,~] = loadWavesNDBC('WaveData_NDBC46011.txt');
 
 % Load tide data from tide station file
 [dnTides,waterSurfaceElevation] = loadTidesNOAA('TideData_NOAA9411406.txt');

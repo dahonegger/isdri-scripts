@@ -30,13 +30,12 @@ txIMat28 = []; txDN28 = []; txRFO28 = [];
 
 %% loop through mat files
 numDays = numel(dayFolder)-numel(dayFolderSave);
-% for iDay = 3+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
-for iDay = 2+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
+for iDay = 3+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
     dayFolder(iDay).polRun = dir(fullfile(baseDir,dayFolder(iDay).name,'*_pol.mat'));
     output_fname =   num2str(dayFolder(iDay).name);
     
     %% loop through all runs for this day
-    for iRun = 213:1:length(dayFolder(iDay).polRun) %loop through files
+    for iRun = 200:1:length(dayFolder(iDay).polRun) %loop through files
         
         cubeName = fullfile(baseDir,dayFolder(iDay).name,dayFolder(iDay).polRun(iRun).name);
         
@@ -131,7 +130,12 @@ for iDay = 2+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
         
     end
     
-    save(fullfile(saveDir,output_fname),'txIMat','txDn','Rg','txLon','txLat','txRFO','-v7.3')
+    if ~isempty(txIMat28)
+        save(fullfile(saveDir,output_fname),'txIMat','txDn','Rg','txLon','txLat','txRFO',...
+            txIMat28, txDn28, txRFO28, '-v7.3')
+    else
+        save(fullfile(saveDir,output_fname),'txIMat','txDn','Rg','txLon','txLat','txRFO','-v7.3')
+    end
     
     disp([num2str(iRun),' of ', num2str(length(dayFolder(iDay).polRun)),' run. ',num2str(iDay),' of ',num2str(length(dayFolder)),' day.'])
     clearvars -except baseDir saveDir desiredStartAngle dayFolder dayFolderSave numDays
