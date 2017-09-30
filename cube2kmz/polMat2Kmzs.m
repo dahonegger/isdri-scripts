@@ -44,7 +44,7 @@ radarLatitude      = [];%41.271735; %41.271747; % Leave blank [] to use UTM coor
 radarLongitude     = [];%-72.343475; % Leave blank [] to use UTM coordinates in Cube.results
 heading            = [];%282.5;         % If cube's internal heading is wrong, apply this heading instead
 maxHeading         = 359;         % Set maximum heading value (clockwise from North) for footprint
-rangeDecimation    = 3;           % Decimate ranges by this factor to speed up interpolation to Cartesian
+rangeDecimation    = 2;           % Decimate ranges by this factor to speed up interpolation to Cartesian
 cartGrid_dx        = 15;          % kmz requires cartesian grid - this is spatial resolution
 cartGrid_dy        = 15;          % kmz requires cartesian grid - this is spatial resolution
 colorAxisLimits    = [0 225];    % caxis
@@ -97,10 +97,13 @@ numRotations   = header.rotations;
 
 % Determine what gets loaded and whether it's a multi-file output
 if runLength < tAvg-rotationPeriod/2
+	tAvg = runLength;
     % Run length is too small or averaging window is too large
-    errmsg = 'Fewer rotations in the provided cube than the requested filter width.';
-    error(errmsg)
-elseif abs(tAvg-runLength) < rotationPeriod/2
+    warnmsg = sprintf('Fewer rotations in the provided cube than the requested filter width. Changing filter width to be %f sec, the length of the recording.',runLength);
+    warning(warnmsg)
+end
+	
+if abs(tAvg-runLength) < rotationPeriod/2
     % Then the cube is the same size as the filter width and only the timex needs to be loaded
     if ~exist('timex','var') || isempty(timex) % What if the timex didn't exist in this cube?
         load(cubeName,'data')
@@ -293,7 +296,11 @@ end
 % Move out of working folder
 cd(cwd)
 pause(0.5)
-rmdir(folderName,'s')
+if isunix
+    eval(['! rm -rf ',folderName])
+else
+    rmdir(folderName,'s')
+end
 pause(0.5)
 
 end
