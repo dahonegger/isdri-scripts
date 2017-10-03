@@ -191,7 +191,8 @@ if multiFile
     
     % Loop thru files
     for iFile = 1:length(startTimeVec)
-        thisData = double(mean(data(iMinRg:end,:,startRotVec(iFile):endRotVec(iFile)),3));
+        thisRotationVec = startRotVec(iFile):endRotVec(iFile);
+        thisData = double(mean(data(iMinRg:end,:,thisRotationVec),3));
         kmzData = interp2(Azi(:)', Rg(:), thisData, azi0_grid, r_grid, 'linear', NaN);
         thisStartDateNum = results.start_time.dateNum + startTimeVec(iFile)/86400;
         thisEndDateNum = results.start_time.dateNum + endTimeVec(iFile)/86400;
@@ -200,7 +201,7 @@ if multiFile
         else
             thisKmzNameStr = [kmzNameStr(1:yrInd-1),dn2trizna(thisStartDateNum)];
         end
-        
+        fprintf('Writing kmz: %.f rot mean (%s to %s).\n',numel(thisRotationVec),datestr(thisStartDateNum,'yyyy-mm-dd HH:MM:SS'),datestr(thisEndDateNum,'yyyy-mm-dd HH:MM:SS'))
         kmzGen(lons,lats,kmzData,colorAxisLimits,thisStartDateNum,mean([thisStartDateNum,thisEndDateNum]),thisEndDateNum,outputDirectory,thisKmzNameStr,doBilateralFilter)
     end
 else
@@ -215,6 +216,8 @@ else
     fprintf('Interpolating to Lat/Lon grid. ')
     timex = double(timex(iMinRg:end, :, :));
     kmzData = interp2(Azi, Rg, timex, azi0_grid, r_grid, 'linear', NaN);
+    
+    fprintf('Writing kmz: %.f rot mean (%s to %s).\n',numRotations,datestr(minTime,'yyyy-mm-dd HH:MM:SS'),datestr(maxTime,'yyyy-mm-dd HH:MM:SS'))
 
     kmzGen(lons,lats,kmzData,colorAxisLimits,minTime,meanTime,maxTime,outputDirectory,kmzNameStr,doBilateralFilter)
 
