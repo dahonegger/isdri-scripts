@@ -1,4 +1,4 @@
-function cube2png_guadalupe_enviro(cubeFile,pngFile,Z,R)
+function cube2png_guadalupe_enviro(cubeFile,pngFile)
 % Originally 'cube2timex.m' by David Honegger 
 % Updated by Alex Simpson to show tide, wind, discharge data 
 % Updated by Annika O'Dea to show waves instead of discharge at the
@@ -25,7 +25,26 @@ if ~exist('timex','var') || isempty(timex)
     timex = double(nanmean(data,3));
 else
 end
-    
+
+% Handle long runs (e.g. 18 minutes
+if (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 < 700
+    timexCell{1} = timex;
+    timeIntCell{1} = mean(timeInt);
+    pngFileCell{1} = pngFile;
+elseif (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 > 700
+    load(cubeFile,'data')
+    ii = 1;
+    for i = 1:64:(floor(size(data,3)/64))*64
+        timexCell{ii} = double(mean(data(:,:,i:i+64),3));
+        timeIntCell{ii} = timeInt(1,i:i+64);
+        [path,fname,ext] = fileparts(pngFile);
+        tmp = datestr(epoch2Matlab(mean(timeIntCell{ii})),'HHMM');
+        fname = [fname(1:17),tmp,'_pol_timex'];
+        pngFileCell{ii} = fullfile(path,[fname,ext]);
+        ii = ii+1;
+    end
+end
+
 % Implement user overrides
 if ~isempty(userHeading)
     heading = userHeading;
@@ -43,7 +62,7 @@ if ~isempty(userOriginLonLat)
     lon0 = userOriginLonLat(1);
     lat0 = userOriginLonLat(2);
 else
-    [lat0,lon0] = UTMtoll(results.YOrigin,results.XOrigin,str2double(results.UTMZone(1:2)));
+    [lat0,lon0] = UTM2ll(results.YOrigin,results.XOrigin,str2double(results.UTMZone(1:2)));
 end
 
 % Convert to world coordinates
@@ -65,6 +84,18 @@ nowTime = epoch2Matlab(nanmean(timeInt(:))); % UTC
 [dnTides,waterSurfaceElevation] = loadTidesNOAA('TideData_NOAA9411406.txt');
 waterSurfaceElevation(waterSurfaceElevation == -999) = nan;
 
+% Load contour file
+bathy = load('bathyContours.mat');
+for i = 1:numel(bathy.x)
+    [bathy.N{i}  bathy.E{i}] = ll2UTM(bathy.y{i}, bathy.x{i});
+    bathy.Ykm{i} = (bathy.N{i} - results.YOrigin)./1000;
+    bathy.Xkm{i} = (bathy.E{i} - results.XOrigin)./1000;
+end
+
+for IMAGEINDEX = 1:numel(timexCell)
+    timex = timexCell{IMAGEINDEX};
+    timeInt = timeIntCell{IMAGEINDEX}; 
+    pngFile = pngFileCell{IMAGEINDEX};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Plot! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % setup
 fig = figure('visible','off');
@@ -106,7 +137,18 @@ titleLine2 = sprintf('\\makebox[4in][c]{%s UTC (%s PDT)}',datestr(epoch2Matlab(n
 title({titleLine1,titleLine2},...
 'fontsize',14,'interpreter','latex');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% ADD BATHY CONTOURS %%%%%%%%%%%%%%%%%%%%%%%%%%
-[C, h] = contourm(Z,R,[0 -30 -50 -100],'ShowText','on','LineColor','k');
+set(fig,'currentaxes',axRad)
+depths = [0 -30 -50 -100];
+for i = 1:numel(depths)
+    tmp = depths(i);
+    for n = find(bathy.z==tmp) 
+       plot(bathy.Xkm{n},bathy.Ykm{n},'color',[.25 .25 .25],'linewidth',1)
+    end
+end
+text(0,-11.6,'0m','color',[.25 .25 .25],'interpreter','latex')
+text(-6,-11.6,'-30m','color',[.25 .25 .25],'interpreter','latex')
+text(-8.8,-11.6,'-50m','color',[.25 .25 .25],'interpreter','latex')
+text(-12,-11.6,'-100m','color',[.25 .25 .25],'interpreter','latex')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TIDE SIGNAL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 set(fig,'currentaxes',axTide)
@@ -168,3 +210,5 @@ title('Significant wave height','fontsize',14,'interpreter','latex')
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SAVE & CLOSE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 print(fig,'-dpng','-r100',pngFile)
 close(fig)
+
+end
