@@ -4,16 +4,17 @@
 
 % SUPPORT DATA PATH
 % supportDataPath = 'D:\Data\ISDRI\SupportData'; % LENOVO HARD DRIVE
-supportDataPath = 'E:\SupportData'; %CTR HUB 
+supportDataPath = 'D:\SupportData'; % HUB 
 
 % GITHUB DATA PATH
 addpath(genpath('C:\Data\ISDRI\isdri-scripts')) %GITHUB REPOSITORY
 
 % MAT FILES LOCATION
-baseDir = 'E:\guadalupe\processed\'; % HUB 1
+baseDir = 'D:\guadalupe\processed\'; % HUB 1
 
 % PNG LOCATION
-saveDir = 'C:\Data\isdri\guadalupe\postprocessed\timex_enviroInfo\'; % Dell#2 HARD DRIVE
+% saveDir = 'C:\Data\isdri\guadalupe\postprocessed\timex_enviroInfo\'; % Dell#2 HARD DRIVE
+saveDir = 'D:\guadalupe\postprocessed\enviroInfoPNGs\'; % HUB
 
 % rewrite existing files in save directory? true=yes
 doOverwrite = false;
@@ -38,9 +39,6 @@ if downloadWaves; fetchWavesNDBC(46011,fullfile(supportDataPath,'Waves'),'WaveDa
 % TIDES: save directory, save fname 
 endTime = '20170920'; startTime = '20170829';
 if downloadTides; fetchTidesNOAA(9411406,fullfile(supportDataPath,'tides'),'TideData_NOAA9411406.txt',startTime,endTime);end
-
-%% LOAD BATHY
-[Z, R] = arcgridread('port_san_luis_public_mhw.asc');
 
 %% Process Files 
 imgId = 1;
@@ -69,7 +67,7 @@ for iDay = 1:length(dayFolder)
             else
                 fprintf('%s ...',cubeBaseName)
 %                 try
-                    cube2png_guadalupe_enviro_bathy(cubeName,pngName,Z,R)
+                    cube2png_guadalupe_enviro_bathy(cubeName,pngName)
                     fprintf('Done.\n')
 %                 catch
 %                     fid = fopen(['FAILED_on_file_',pngBaseName,'.txt'], 'wt' );

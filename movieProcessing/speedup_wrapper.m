@@ -1,5 +1,6 @@
 
-baseDir = 'E:\uasData\09.27.17 Guadalupe (rips)';
+clear all; close all;
+baseDir = 'D:\uasData\10.6.17 Guadalupe (rips + PR)';
 files = dir(fullfile(baseDir,'*.MP4'));
 speed = 20;
 
