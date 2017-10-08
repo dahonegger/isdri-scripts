@@ -5,11 +5,10 @@ close all; clear all;
 
 %% User inputs
 % add paths to ISDRI HUB Support Data and GitHub Repository
-addpath(genpath('E:\guadalupe\processed')) %CTR HUB
+Hub = 'F:\';
 addpath(genpath('C:\Data\ISDRI\isdri-scripts')) %github repository
 
 % add path to mat files and choose directory for png's
-Hub = 'E:\';
 baseDir = [Hub 'guadalupe\processed\'];
 saveDir = [Hub 'guadalupe\postprocessed\alongshoreTransectMatrix\'];
 
@@ -20,7 +19,9 @@ dayFolder = dir([baseDir,'2017*']);
 dayFolderSave = dir([saveDir,'2017*']);
 
 %initialize variables
-txIMat = [];
+txIMat_600 = [];
+txIMat_700 = [];
+txIMat_650 = [];
 txDn = [];
 
 %% loop through mat files
@@ -36,8 +37,6 @@ for iDay = 2+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
         
         %% LOAD TIMEX
         load(cubeName,'Azi','Rg','timex','timeInt','results');
-        
-%         [rangeFalloff, r2] = findRangeFalloff(timex, Rg, Azi);
         
         % handle the 512 rotation collections: turn into 64 rot averages
         if (epoch2Matlab(timeInt(numel(timeInt)))-epoch2Matlab(timeInt(1))).*24.*60.*60 > 120
@@ -63,8 +62,8 @@ for iDay = 2+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
                 
         % find indices of relevant alongshore transects
         x600 = 301;
+        x650 = 251;
         x700 = 201;
-        x800 = 101;
         
         % set up domain
         xC = -2000:2000;
@@ -79,39 +78,36 @@ for iDay = 2+numel(dayFolder)-numDays:numel(dayFolder)%loop through days
             
             % grab transects from grid
             T600 = tC(x600,:);
+            T650 = tC(x650,:);
             T700 = tC(x700,:);
-            T800 = tC(x800,:);
-            txIMat_600 = horzcat(txIMat_600,T600);
-            txIMat_700 = horzcat(txIMat_700,T700);
-            txIMat_800 = horzcat(txIMat_800,T800);
+            txIMat_600 = vertcat(txIMat_600,T600);
+            txIMat_650 = vertcat(txIMat_650,T650);
+            txIMat_700 = vertcat(txIMat_700,T700);
             txDn = horzcat(txDn,mean(epoch2Matlab(timeInt(:))));
             
         elseif (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 > 120
             for ii = 1:8
                 % rotate domain
                 tC = interp2(AZI,RG,double(timexCell{ii}(16:1168,:)),aziC',rgC');
-            
+                
                 T600 = tC(x600,:);
+                T650 = tC(x650,:);
                 T700 = tC(x700,:);
-                T800 = tC(x800,:);
-                txIMat_600 = horzcat(txIMat_600,T600);
-                txIMat_700 = horzcat(txIMat_700,T700);
-                txIMat_800 = horzcat(txIMat_800,T800);
-                txI = timexCell{ii}(:,idx);
-                txIMat = horzcat(txIMat,txI);
+                txIMat_600 = vertcat(txIMat_600,T600);
+                txIMat_650 = vertcat(txIMat_650,T650);
+                txIMat_700 = vertcat(txIMat_700,T700);
+                %                 txI = timexCell{ii}(:,idx);
+                %                 txIMat = horzcat(txIMat,txI);
                 txDn = horzcat(txDn, epoch2Matlab(mean(timeInt(1,((ii-1)*64 + 1):((ii)*64)))));
             end
         end
         
-        txLon = lon(:,idx);
-        txLat = lat(:,idx);
-        
     end
     
-    save(fullfile(saveDir,output_fname),'txIMat','txDn','Rg','txLon','txLat','-v7.3')
+    save(fullfile(saveDir,output_fname),'txIMat_600','txIMat_700','txIMat_650','txDn','xC','-v7.3')
     
     disp([num2str(iRun),' of ', num2str(length(dayFolder(iDay).polRun)),' run. ',num2str(iDay),' of ',num2str(length(dayFolder)),' day.'])
-    clearvars -except baseDir saveDir desiredStartAngle dayFolder dayFolderSave numDays
-    txIMat = []; txDn = [];   
+    clearvars -except baseDir saveDir dayFolder dayFolderSave numDays
+    txIMat_600 = []; txIMat_700 = []; txIMat_650 = []; txDn = [];   
 end
 
