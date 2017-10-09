@@ -30,7 +30,7 @@ x0 = 0;
 y0 = 0;
 
 % set rotation(so shoreline is parallel to edge of plot)
-rotation = 14.5;
+rotation = 13;
 heading = results.heading-rotation;
 [AZI,RG] = meshgrid(Azi,Rg(16:668));
 
@@ -93,10 +93,6 @@ shading interp
 axis image
 colormap(hot)
 plot(xJMC,yJMC,'b.','MarkerSize',20)
-y1 = get(gca,'ylim');
-line([-600 -600],y1)
-line([-650 -650],y1)
-line([-700 -700],y1)
 if ~isempty(axisLimits)
 axis(axisLimits)
 end

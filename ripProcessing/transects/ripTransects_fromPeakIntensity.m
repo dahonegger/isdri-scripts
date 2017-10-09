@@ -110,4 +110,3 @@ for iDay = numel(dayFolder)-numDays:numel(dayFolder)%loop through days
     clearvars -except baseDir saveDir dayFolder dayFolderSave numDays
     txIMat_600 = []; txIMat_700 = []; txIMat_650 = []; txDn = [];   
 end
-

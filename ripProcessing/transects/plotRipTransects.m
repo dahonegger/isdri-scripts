@@ -8,7 +8,7 @@ files = dir('F:\guadalupe\postprocessed\alongshoreTransectMatrix');
 saveDir = [Hub 'guadalupe\postprocessed\alongshoreTransectMatrix'];
 
 startTime = '20170901_0000';
-endTime = '20170915_0000';
+endTime = '20170921_0000';
 baseDir = [Hub 'guadalupe\postprocessed\alongshoreTransectMatrix\'];
 
 if strcmp(startTime(7:8),endTime(7:8))
