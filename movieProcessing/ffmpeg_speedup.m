@@ -10,6 +10,7 @@ function [vid_outpath, ffmpeg_output, ffmpeg_exitcode] = ...
 % 
 % Required Inputs:
 %   vid_inpath:
+<<<<<<< HEAD
 %<<<<<<< HEAD
 %       full or relative path to the video file 
 %   speed: Desired output speed. Note this is truncated to nearest 0.1x.
@@ -17,6 +18,15 @@ function [vid_outpath, ffmpeg_output, ffmpeg_exitcode] = ...
 %       full or relative path to the video file speed: Desired output
 %       speed. Note this is truncated to nearest 0.1x.
 %>>>>>>> master
+=======
+
+%       full or relative path to the video file 
+%   speed: Desired output speed. Note this is truncated to nearest 0.1x.
+
+%       full or relative path to the video file speed: Desired output
+%       speed. Note this is truncated to nearest 0.1x.
+
+>>>>>>> ripProcessing
 %
 % Optional Inputs:
 %   vid_outpath:

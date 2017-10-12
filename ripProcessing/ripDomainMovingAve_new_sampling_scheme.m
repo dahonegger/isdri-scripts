@@ -5,8 +5,8 @@ clear variables; home
 addpath(genpath('C:\Data\ISDRI\isdri-scripts'));
 
 %% define time of interest
-startTime = '20170912_1900';
-endTime = '20170913_0100';
+startTime = '20171007_1900';
+endTime = '20171008_0200';
 
 saveFolder = ['C:\Data\ISDRI\postprocessed\ripVideos\' startTime '-' endTime];
 mkdir(saveFolder)

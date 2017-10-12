@@ -1,8 +1,8 @@
 
 % list path and files you wish to concatenate
-baseDir = 'E:\uasData\09.27.17 Guadalupe (rips)';
-file1 = 'DJI_0092_20x.MP4';
-file2 = 'DJI_0093_20x.MP4';
+baseDir = 'F:\uasData\10.11.17 Guadalupe (big rip + PR)';
+file1 = 'DJI_0023_20x.MP4';
+file2 = 'DJI_0024_20x.MP4';
 
 %% 
 vid1_inpath = fullfile(baseDir,file1);

@@ -9,7 +9,7 @@ supportDataPath = 'D:\Data\ISDRI\SupportData'; % LENOVO HARD DRIVE
 addpath(genpath('C:\Data\ISDRI\isdri-scripts')) %GITHUB REPOSITORY
 
 % MAT FILES LOCATION
-baseDir = 'E:\guadalupe\processed\'; % HUB 1
+baseDir = 'F:\guadalupe\processed\'; % HUB 1
 
 % PNG LOCATION
 saveDir = 'C:\Data\ISDRI\postprocessed\ripCurrentTimex_with_Instruments\'; % LENOVO HARD DRIVE

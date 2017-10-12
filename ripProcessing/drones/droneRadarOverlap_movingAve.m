@@ -3,11 +3,19 @@
 clear variables;
 
 addpath(genpath('C:\Data\ISDRI\isdri-scripts'))
-radarDataLocation = 'F:\guadalupe\processed';
-imagePng = 'F:\uasData\09.11.17 Guadalupe Dunes (rips)\Footage\DJI_0045.JPG';
 
-saveFolder = ['C:\Data\ISDRI\postprocessed\ripDrone\' imagePng(12:13)...
-    imagePng(15:16) imagePng(18:19) '_' imagePng(52:59)];
+% inputs
+Hub = 'F:\';
+JPGdate = '091217';
+JPGname = 'DJI_0071';
+radarDataLocation = [Hub 'guadalupe\processed'];
+folderName = ' Guadalupe Dunes (IW+rip)\Footage\';
+imagePng = [Hub 'uasData\' JPGdate(1:2) '.' JPGdate(3:4) '.' JPGdate(5:6) folderName JPGname '.jpg'];
+domainSize = [-500 2000; -500 -500];  % row 1: as values added to drone location.
+                                    % row 2: xs values added to drone location (2,1);
+                                    % fixed xs value(2,2)
+
+saveFolder = ['C:\Data\ISDRI\postprocessed\ripDrone\' JPGdate '_' JPGname];
 mkdir(saveFolder)
 
 % fetch image details
@@ -74,14 +82,30 @@ for iRun = 1:7;
     % interpolate onto a smaller cartesian grid
     rotation = 13;
     headingR = results.heading-rotation;
-    xC = -200:200;
-    yC = -900:-500;
+    aziDroneC = aziDrone - rotation;
+    thDroneC = pi/180*(90-aziDroneC-results.heading);
+    [xDroneC,yDroneC] = pol2cart(thDroneC,rgDrone);
+    xC = (yDroneC+domainSize(1,1)):(yDroneC+domainSize(1,2));
+    yC = (xDroneC+domainSize(2,1)):domainSize(2,2);
     [XX,YY] = meshgrid(yC,xC);
     [thC,rgC] = cart2pol(XX,YY);
     aziC = wrapTo360(90 - thC*180/pi - headingR);
-    aziDroneC = aziDrone - 13;
-    thDroneC = pi/180*(90-aziDroneC-results.heading);
-    [xDroneC,yDroneC] = pol2cart(thDroneC,rgDrone);
+    
+    % find coordinates of MacMahan instruments
+    latJM = [34.9826 34.981519 34.981131 34.980439 34.98035 34.985969];
+    lonJM = [-120.657311 -120.651639 -120.650239 -120.647881...
+        -120.651719 -120.650319];
+    
+    [yUTM, xUTM] = ll2UTM(latJM,lonJM);
+    X_JM = xUTM - results.XOrigin;
+    Y_JM = yUTM - results.YOrigin;
+    
+    % rotate onto the same grid
+    [thJM,rgJM] = cart2pol(X_JM,Y_JM);
+    aziJM = wrapTo360(-thJM*180/pi + 90 - results.heading);
+    aziJMC = aziJM - rotation;
+    thJMC = pi/180*(90 - aziJMC - results.heading);
+    [xJMC,yJMC] = pol2cart(thJMC,rgJM);
     
     scanClipped = (double(data(16:668,:,:)));
     
@@ -104,6 +128,8 @@ for s = 1:rate:size(tCAve,3)
     fig = figure('visible','off');
     pcolor(XX,YY,tCAve(:,:,s)')
     shading interp; axis image
+    hold on
+    plot(xJMC,yJMC,'b.','MarkerSize',20)
     colormap(hot)
     colorbar
     caxis([50 200])
@@ -121,10 +147,12 @@ for s = 1:rate:size(tCAve,3)
     clear ttl ttlFig
 end
 
+% make single PNG overlapping with JPG
+
+
 cd(saveFolder)
 pngs = dirname('*.png');
-outputFile = [saveFolder '\' imagePng(12:13)...
-    imagePng(15:16) imagePng(18:19) '_' imagePng(52:59) '.gif'];
+outputFile = [saveFolder '\' JPGdate '_' JPGname '.gif'];
 
 delayTime = 0.03;
 makeGif(pngs,outputFile,delayTime)

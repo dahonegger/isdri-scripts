@@ -47,10 +47,17 @@ latJM = [34.9826 34.981519 34.981131 34.980439 34.98035 34.985969];
 lonJM = [-120.657311 -120.651639 -120.650239 -120.647881...
     -120.651719 -120.650319];
 
- [yUTM, xUTM] = ll2UTM(latJM,lonJM);
- X = xUTM - results.XOrigin;
- Y = yUTM - results.YOrigin;
- 
+[yUTM, xUTM] = ll2UTM(latJM,lonJM);
+X_JM = xUTM - results.XOrigin;
+Y_JM = yUTM - results.YOrigin;
+
+% rotate onto the same grid
+[thJM,rgJM] = cart2pol(X_JM,Y_JM);
+aziJM = wrapTo360(-thJM*180/pi + 90 - results.heading);
+aziJMC = aziJM - rotation;
+thJMC = pi/180*(90 - aziJMC - results.heading);
+[xJMC,yJMC] = pol2cart(thJMC,rgJM);
+
 nowTime = epoch2Matlab(nanmean(timeInt(:))); % UTC
 
 % Load wind data from wind station file
@@ -85,7 +92,7 @@ hold on
 shading interp
 axis image
 colormap(hot)
-plot(X,Y,'b.','MarkerSize',20)
+plot(xJMC,yJMC,'b.','MarkerSize',20)
 if ~isempty(axisLimits)
 axis(axisLimits)
 end

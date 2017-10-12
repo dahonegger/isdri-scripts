@@ -4,17 +4,28 @@
 
 % SUPPORT DATA PATH
 % supportDataPath = 'D:\Data\ISDRI\SupportData'; % LENOVO HARD DRIVE
+<<<<<<< HEAD
 supportDataPath = 'D:\SupportData'; % HUB 
+=======
+supportDataPath = 'F:\SupportData'; %CTR HUB 
+>>>>>>> ripProcessing
 
 % GITHUB DATA PATH
 addpath(genpath('C:\Data\ISDRI\isdri-scripts')) %GITHUB REPOSITORY
 
 % MAT FILES LOCATION
+<<<<<<< HEAD
 baseDir = 'D:\guadalupe\processed\'; % HUB 1
 
 % PNG LOCATION
 % saveDir = 'C:\Data\isdri\guadalupe\postprocessed\timex_enviroInfo\'; % Dell#2 HARD DRIVE
 saveDir = 'D:\guadalupe\postprocessed\enviroInfoPNGs\'; % HUB
+=======
+baseDir = 'F:\guadalupe\processed\'; % HUB 1
+
+% PNG LOCATION
+saveDir = 'F:\guadalupe\postprocessed\enviroInfoPNGs\'; % Dell#2 HARD DRIVE
+>>>>>>> ripProcessing
 
 % rewrite existing files in save directory? true=yes
 doOverwrite = false;
