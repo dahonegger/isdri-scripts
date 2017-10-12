@@ -3,7 +3,9 @@ function cube2png_guadalupe_enviro(cubeFile,pngFile)
 % Updated by Alex Simpson to show tide, wind, discharge data 
 % Updated by Annika O'Dea to show waves instead of discharge at the
 % Guadalupe Dunes site
-% 9/17/2017
+% Updated by Alex Simpson to show bathy contours and parse all runs into 64
+% rotation averages
+% 10/12/2017
 
 % User options: leave empty [] for Matlab auto-sets
 colorAxLimits           = [0 150]; % This gets updated for bad data periods (~May 28-30)
@@ -27,14 +29,14 @@ else
 end
 
 % Handle long runs (e.g. 18 minutes
-if (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 < 700
+if (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 < 200
     timexCell{1} = timex;
     timeIntCell{1} = mean(timeInt);
     pngFileCell{1} = pngFile;
-elseif (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 > 700
+elseif (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 > 200
     load(cubeFile,'data')
     ii = 1;
-    for i = 1:64:(floor(size(data,3)/64))*64
+    for i = 1:64:(floor(size(data,3)/64))*64 - 64
         timexCell{ii} = double(mean(data(:,:,i:i+64),3));
         timeIntCell{ii} = timeInt(1,i:i+64);
         [path,fname,ext] = fileparts(pngFile);
@@ -81,8 +83,9 @@ nowTime = epoch2Matlab(nanmean(timeInt(:))); % UTC
 [dnWaves,Hs,dirWaves] = loadWavesNDBC('WaveData_NDBC46011.txt');
 
 % Load tide data from tide station file
-[dnTides,waterSurfaceElevation] = loadTidesNOAA('TideData_NOAA9411406.txt');
-waterSurfaceElevation(waterSurfaceElevation == -999) = nan;
+% [dnTides,waterSurfaceElevation] = loadTidesNOAA('TideData_NOAA9411406.txt');
+[waterSurfaceElevation,dnTides] = loadXTide('Arguello_Point_Sep3_2mos.txt');
+% waterSurfaceElevation(waterSurfaceElevation == -999) = nan;
 
 % Load contour file
 bathy = load('bathyContours.mat');
