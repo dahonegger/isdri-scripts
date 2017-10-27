@@ -1,2 +1,3 @@
 file 'E:\uasData\09.27.17 Guadalupe (rips)\DJI_0092_20x.MP4'
+
 file 'E:\uasData\09.27.17 Guadalupe (rips)\DJI_0093_20x.MP4'
