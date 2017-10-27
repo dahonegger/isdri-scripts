@@ -1,2 +1,2 @@
-file 'F:\uasData\10.11.17 Guadalupe (big rip + PR)\DJI_0023_20x.MP4'
-file 'F:\uasData\10.11.17 Guadalupe (big rip + PR)\DJI_0024_20x.MP4'
+file 'F:\uasData\10.23.17 Guadalupe (cBathy)\DJI_0029_DJI_0030_DJI_0031.MP4'
+file 'F:\uasData\10.23.17 Guadalupe (cBathy)\DJI_0032.MP4'

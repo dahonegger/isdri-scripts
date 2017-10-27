@@ -3,21 +3,17 @@
 % add paths to CTR HUB Support Data and GitHub Repository
 
 % SUPPORT DATA PATH
-% supportDataPath = 'D:\Data\ISDRI\SupportData'; % LENOVO HARD DRIVE
-
-supportDataPath = 'E:\SupportData'; % HUB 
-
+supportDataPath = 'E:\supportData\'; % LENOVO HARD DRIVE
+% supportDataPath = 'E:\SupportData'; %CTR HUB 
 
 % GITHUB DATA PATH
 addpath(genpath('C:\Data\ISDRI\isdri-scripts')) %GITHUB REPOSITORY
 
 % MAT FILES LOCATION
-
-baseDir = 'E:\guadalupe\processed\'; % HUB 1
+baseDir = 'E:\purisima\processed\'; % HUB 1
 
 % PNG LOCATION
-% saveDir = 'C:\Data\isdri\guadalupe\postprocessed\timex_enviroInfo\'; % Dell#2 HARD DRIVE
-saveDir = 'F:\guadalupe\postprocessed\enviroInfoPNGs2\'; % HUB
+saveDir = 'E:\purisima\postprocessed\enviro_info\'; % LENOVO HARD DRIVE
 
 % rewrite existing files in save directory? true=yes
 doOverwrite = false;
@@ -25,9 +21,7 @@ doOverwrite = false;
 % Download new support data files?
 downloadWind = true;
 downloadWaves = true;
-
-%note: no longer downloading tides, using predicted 2 month record instead
-% downloadTides = false; 
+downloadTides = false;
 
 %% Prep files
 % make save directory
@@ -42,12 +36,12 @@ if downloadWind;fetchWindNDBC(46011,fullfile(supportDataPath,'Wind'),'MetData_ND
 % WAVES: save directory, save fname 
 if downloadWaves; fetchWavesNDBC(46011,fullfile(supportDataPath,'Waves'),'WaveData_NDBC46011.txt');end
 % TIDES: save directory, save fname 
-% endTime = '20170920'; startTime = '20170829';
-% if downloadTides; fetchTidesNOAA(9411406,fullfile(supportDataPath,'tides'),'TideData_NOAA9411406.txt',startTime,endTime);end
+endTime = '20170920'; startTime = '20170829';
+if downloadTides; fetchTidesNOAA(9411406,fullfile(supportDataPath,'Tides'),'TideData_NOAA9411406.txt',startTime,endTime);end
 
 %% Process Files 
 imgId = 1;
-for iDay = 1:length(dayFolder)
+for iDay = 34:length(dayFolder)
         
     dayFolder(iDay).polRun = dir(fullfile(baseDir,dayFolder(iDay).name,'*_pol.mat'));
     saveDirSub = [saveDir,dayFolder(iDay).name];
@@ -72,7 +66,7 @@ for iDay = 1:length(dayFolder)
             else
                 fprintf('%s ...',cubeBaseName)
 %                 try
-                    cube2png_guadalupe_enviro_bathy(cubeName,pngName)
+                    cube2png_purisima_enviro(cubeName,pngName)
                     fprintf('Done.\n')
 %                 catch
 %                     fid = fopen(['FAILED_on_file_',pngBaseName,'.txt'], 'wt' );
