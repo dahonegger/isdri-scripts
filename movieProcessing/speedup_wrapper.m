@@ -1,9 +1,9 @@
 
-baseDir = 'E:\uasData\09.27.17 Guadalupe (rips)';
+baseDir = 'F:\uasData\10.17.17 Guadalupe (Sounder transects)';
 files = dir(fullfile(baseDir,'*.MP4'));
 speed = 20;
 
-for i = 1:numel(files)
+for i = numel(files):-1:1
     vid_inpath = fullfile(baseDir,files(i).name);
     [saveDir, nameBase, nameExt] = fileparts(vid_inpath);
     vid_outpath = fullfile(saveDir,[nameBase,'_20x',nameExt]);

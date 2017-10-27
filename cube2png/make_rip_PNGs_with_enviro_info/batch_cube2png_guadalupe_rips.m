@@ -35,7 +35,7 @@ if downloadWind;fetchWindNDBC(46011,fullfile(supportDataPath,'Wind'),'MetData_ND
 % WAVES: save directory, save fname 
 if downloadWaves; fetchWavesNDBC(46011,fullfile(supportDataPath,'Waves'),'WaveData_NDBC46011.txt');end
 % TIDES: save directory, save fname 
-endTime = '20170924'; startTime = '20170829';
+endTime = '20171012'; startTime = '20170913';
 if downloadTides; fetchTidesNOAA(9411406,fullfile(supportDataPath,'Tides'),'TideData_NOAA9411406.txt',startTime,endTime);end
 
 %% Process Files 
