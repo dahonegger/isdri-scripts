@@ -5,7 +5,7 @@
 % SUPPORT DATA PATH
 % supportDataPath = 'D:\Data\ISDRI\SupportData'; % LENOVO HARD DRIVE
 
-supportDataPath = 'E:\SupportData'; % HUB 
+supportDataPath = 'D:\SupportData'; % HUB 
 
 
 % GITHUB DATA PATH
@@ -13,18 +13,18 @@ addpath(genpath('C:\Data\ISDRI\isdri-scripts')) %GITHUB REPOSITORY
 
 % MAT FILES LOCATION
 
-baseDir = 'E:\guadalupe\processed\'; % HUB 1
+baseDir = 'D:\guadalupe\processed\'; % HUB 1
 
 % PNG LOCATION
 % saveDir = 'C:\Data\isdri\guadalupe\postprocessed\timex_enviroInfo\'; % Dell#2 HARD DRIVE
-saveDir = 'F:\guadalupe\postprocessed\enviroInfoPNGs2\'; % HUB
+saveDir = 'D:\guadalupe\postprocessed\enviroInfoPNGs2\'; % HUB
 
 % rewrite existing files in save directory? true=yes
 doOverwrite = false;
 
 % Download new support data files?
-downloadWind = true;
-downloadWaves = true;
+downloadWind = false;
+downloadWaves = false;
 
 %note: no longer downloading tides, using predicted 2 month record instead
 % downloadTides = false; 
@@ -47,7 +47,7 @@ if downloadWaves; fetchWavesNDBC(46011,fullfile(supportDataPath,'Waves'),'WaveDa
 
 %% Process Files 
 imgId = 1;
-for iDay = 1:length(dayFolder)
+for iDay = 49:length(dayFolder)
         
     dayFolder(iDay).polRun = dir(fullfile(baseDir,dayFolder(iDay).name,'*_pol.mat'));
     saveDirSub = [saveDir,dayFolder(iDay).name];
