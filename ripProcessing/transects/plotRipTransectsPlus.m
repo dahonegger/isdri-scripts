@@ -5,21 +5,29 @@ close all; clear all;
 
 %% User inputs
 % add paths to ISDRI HUB Support Data and GitHub Repository
-Hub = 'F:\';
+HubOld = 'E:\';
+HubNew = 'F:\';
 addpath(genpath('C:\Data\ISDRI\isdri-scripts')) %github repository
 
 % add path to mat files and choose directory for png's
-baseDir = [Hub 'guadalupe\processed\'];
-saveDir = [Hub 'guadalupe\postprocessed\alongshoreTransectFigures\'];
-matDir = [Hub 'guadalupe\postprocessed\alongshoreTransectMatrix\'];
+baseDir = [HubOld 'guadalupe\processed\'];
+saveDir = [HubNew 'guadalupe\postprocessed\alongshoreTransectFigures\'];
+matDir = [HubOld 'guadalupe\postprocessed\alongshoreTransectMatrix\'];
+% matDir = 'C:\Data\ISDRI\postprocessed\alongshoreTransectMatrix\';
 
+xCutoff = 1168;
+domainRotation = 13;
+yC = -800:800;
+xC = -1200:-500;
+xCMaxI = -1100:-500;
+cAxisLims = [-30 30];
 %% Prep files
 % make save directory
 if ~exist(saveDir);mkdir(saveDir);end
 
 %
-startTime = '20170901_0000';
-endTime = '20170910_0000';
+startTime = '20171001_0000';
+endTime = '20171010_2300';
 if strcmp(startTime(5:6),endTime(5:6))
     days = str2num(startTime(7:8)):str2num(endTime(7:8));
     months = str2num(startTime(5:6)).*ones(size(days));
@@ -45,140 +53,295 @@ dnEnd = datenum([str2num(endTime(1:4)) str2num(endTime(5:6)) str2num(endTime(7:8
     str2num(endTime(10:11)) str2num(endTime(12:13)) 0]);
 
 % Load transects
-transectMatrix600 = []; timesAll = []; transectMatrix650 = []; transectMatrix700 = [];
+idxMaxIAll = []; transectMatrix100 = []; timesAll = []; transectMatrix150 = []; transectMatrix200 = []; transectMatrix75 = [];
 for i = 1:numel(fn)
     load(fn{i})
-    transectMatrix600 = vertcat(transectMatrix600,txIMat_600);
-    transectMatrix650 = vertcat(transectMatrix650,txIMat_650);
-    transectMatrix700 = vertcat(transectMatrix700,txIMat_700);
+    transectMatrix75 = vertcat(transectMatrix75,txIMat_75);
+    transectMatrix100 = vertcat(transectMatrix100,txIMat_100);
+    transectMatrix150 = vertcat(transectMatrix150,txIMat_150);
+    transectMatrix200 = vertcat(transectMatrix200,txIMat_200);
+    idxMaxIAll = vertcat(idxMaxIAll, idxMaxI);
     timesAll = horzcat(timesAll,txDn);
 end
 times = timesAll(timesAll>dn1 & timesAll<dnEnd);
-transectMatrix600 = transectMatrix600(timesAll>dn1 & timesAll<dnEnd,1001:3001);
-transectMatrix650 = transectMatrix650(timesAll>dn1 & timesAll<dnEnd,1001:3001);
-transectMatrix700 = transectMatrix700(timesAll>dn1 & timesAll<dnEnd,1001:3001);
-xC = -1000:1000;
+transectMatrix75 = transectMatrix75(timesAll>dn1 & timesAll<dnEnd,:);
+transectMatrix100 = transectMatrix100(timesAll>dn1 & timesAll<dnEnd,:);
+transectMatrix150 = transectMatrix150(timesAll>dn1 & timesAll<dnEnd,:);
+transectMatrix200 = transectMatrix200(timesAll>dn1 & timesAll<dnEnd,:);
+clear idxMaxI; idxMaxI = idxMaxIAll(timesAll>dn1 & timesAll<dnEnd,:);
+yC = -800:800;
 
-transectMatrixFiltered600 = zeros(size(transectMatrix600));
-transectMatrixFiltered650 = zeros(size(transectMatrix650));
-transectMatrixFiltered700 = zeros(size(transectMatrix700));
-for t = 1:length(times);
-    transectMatrixFiltered600(t,:) = smooth1d_loess(transectMatrix600(t,:),xC,1000,xC);
-    transectMatrixFiltered650(t,:) = smooth1d_loess(transectMatrix650(t,:),xC,1000,xC); 
-    transectMatrixFiltered700(t,:) = smooth1d_loess(transectMatrix700(t,:),xC,1000,xC);
+transectMatrixFiltered75 = zeros(size(transectMatrix75));
+transectMatrixFiltered100 = zeros(size(transectMatrix100));
+transectMatrixFiltered150 = zeros(size(transectMatrix150));
+transectMatrixFiltered200 = zeros(size(transectMatrix200));
+for t = 1:length(times)
+    transectMatrixFiltered75(t,:) = smooth1d_loess(transectMatrix75(t,:),yC,800,yC);
+    transectMatrixFiltered100(t,:) = smooth1d_loess(transectMatrix100(t,:),yC,800,yC);
+    transectMatrixFiltered150(t,:) = smooth1d_loess(transectMatrix150(t,:),yC,800,yC); 
+    transectMatrixFiltered200(t,:) = smooth1d_loess(transectMatrix200(t,:),yC,800,yC);
 end    
-TMat600 = transectMatrix600 - transectMatrixFiltered600;
-TMat650 = transectMatrix650 - transectMatrixFiltered650;
-TMat700 = transectMatrix700 - transectMatrixFiltered700;
+TMat75 = transectMatrix75 - transectMatrixFiltered75;
+TMat100 = transectMatrix100 - transectMatrixFiltered100;
+TMat150 = transectMatrix150 - transectMatrixFiltered150;
+TMat200 = transectMatrix200 - transectMatrixFiltered200;
+load('C:\Data\ISDRI\isdri-scripts\ripProcessing\transects\cMap.mat')
 
 %% loop through mat files
 for iDay = 1:length(days) %loop through days
     
-    fileList = dir(fullfile(folderName{days(iDay)},'*_pol.mat'));
-
+    fileList = dir(fullfile(folderName{iDay},'*_pol.mat'));
+    
+    
     %% loop through all runs for this day
-    for iRun = 1:1:length(fileList) %loop through files
-        
+    for iRun = 1:1:length(fileList) %loop through files to find number of rotations
         cubeName = fullfile(fileList(iRun).folder,fileList(iRun).name);
-        
-        %% LOAD TIMEX
-        load(cubeName,'Azi','Rg','timex','timeInt','results');
-        
-        % in case timex variable doesn't exist
-        if ~exist('timex','var') || isempty(timex)
-            load(cubeName,'data')
-            timex = double(mean(data,3));
-        else
-        end
-        
-        timeScanStart = timeInt(1,1);
-        % set rotation(so shoreline is parallel to edge of plot)
-        rotation = 13;
-        heading = results.heading-rotation;
-        [AZI,RG] = meshgrid(Azi,Rg(16:1168));
-        
-        % find indices of relevant alongshore transects
-        x600 = 301;
-        x650 = 251;
-        x700 = 201;
-        
-        % set up domain
-        xC = -1000:1000;
-        yC = -1200:-500;
-        [XX,YY] = meshgrid(yC,xC);
-        [thC,rgC] = cart2pol(XX,YY);
-        aziC = wrapTo360(90 - thC*180/pi - heading);
-        
-        % rotate domain
-        tC = interp2(AZI,RG,double(timex(16:1168,:)),aziC',rgC');
-        timeScan = mean(epoch2Matlab(timeInt(:)));
-        dv = datevec(timeScan);
-        
-        fig650 = figure('visible','off');
-        fig650.PaperUnits = 'inches';
-        fig650.PaperPosition = [0 0 6 4];
-        subplot(1,2,1)
-        pcolor(XX,YY,tC')
-        shading flat; axis image;
-        colormap(hot)
-        caxis([10 220])
-        hold on
-        y1 = get(gca,'ylim');
-        plot([-650 -650],y1,'b','LineWidth',1)
-        ttl650 = ['2017-' num2str(months(iDay),'%02d') '-'...
-            num2str(days(iDay),'%02d') ' ' num2str(dv(4),'%02d') ':' num2str(dv(5),'%02d') ':' num2str(round(dv(6)),'%02d')];
-        title(ttl650)
-        
-        hold on
-        s2 = subplot(1,2,2);
-        pcolor(times,xC,TMat650');
-        shading flat
-        hold on
-        plot([timeScan timeScan],y1,'r','LineWidth',1)
-        colormap(s2,cMap)
-%         colorbar
-        datetick('x',6)
-        caxis([-50 50])
-        axis([dn1 dnEnd xC(1) xC(end)])
-        figttl650 = [saveDir fileList(iRun).name(1:21) '_650.png'];
-        ttl650_2 = 'Timestack x = 650 m';
-        title(ttl650_2)
-        
-        fig700 = figure('visible','off');
-        fig700.PaperUnits = 'inches';
-        fig700.PaperPosition = [0 0 6 4];
-        subplot(1,2,1)
-        pcolor(XX,YY,tC')
-        shading flat; axis image;
-        colormap(hot)
-        caxis([10 220])
-        hold on
-        y1 = get(gca,'ylim');
-        plot([-700 -700],y1,'b','LineWidth',1)
-        ttl700 = ['2017-' num2str(months(iDay),'%02d') '-'...
-            num2str(days(iDay),'%02d') ' ' num2str(dv(4),'%02d') ':' num2str(dv(5),'%02d') ':' num2str(round(dv(6)),'%02d')];
-        title(ttl700)
-        
-        hold on
-        s2 =subplot(1,2,2);
-        pcolor(times,xC,TMat700');
-        shading flat
-        hold on
-        colormap(s2,cMap)
-%         colorbar
-        plot([timeScan timeScan],y1,'r','LineWidth',1)
-        datetick('x',6)
-        caxis([-20 20])
-        axis([dn1 dnEnd xC(1) xC(end)])
-        ttl700_2 = 'Timestack x = 700 m';
-        title(ttl700_2)
-        figttl700 = [saveDir fileList(iRun).name(1:21) '_700.png'];
-        
-        % print figs
-        print(fig650, figttl650, '-dpng')
-        print(fig700, figttl700, '-dpng')
-        
-        close all
+        load(cubeName,'timeInt');
+        cubeRots(iRun) = size(timeInt,2);
+        clear cubeName cubeTimes
     end
+    
+    % %     %% loop through all runs for this day
+    % %     for iRun = 1:1:length(fileList) %loop through files
+    % %
+    % %         cubeName = fullfile(fileList(iRun).folder,fileList(iRun).name);
+    % %
+    % %         %% LOAD TIMEX
+    % %         load(cubeName,'Azi','Rg','timex','timeInt','results');
+    % % % %
+    % separate into 448 rotations
+    files448 = [];
+    skip = 0;
+    for iRun = 1:length(fileList)
+        if sum(iRun ~= skip) == length(skip)
+            
+            % find number of rotations per file
+            rotations = cubeRots(iRun);
+            
+            % if number of rotations is 64, combine 7 files to get 448
+            if rotations < 448
+                if iRun+6 <= length(cubeRots) && sum(cubeRots(iRun:(iRun+6))==64) == 7
+                    for iRun448 = iRun:(iRun+6)
+                        cubeName = fullfile(fileList(iRun448).folder,fileList(iRun448).name);
+                        load(cubeName,'Azi','Rg','timex','timeInt','results');
+                        
+                        % in case timex variable doesn't exist
+                        if ~exist('timex','var') || isempty(timex)
+                            load(cubeName,'data')
+                            timex = double(mean(data,3));
+                        else
+                        end
+                        
+                        timeAll(iRun448-iRun+1) = mean(epoch2Matlab(timeInt(:)));
+                        timexAll(:,:,iRun448-iRun+1) = timex;
+                        clear timex timeInt
+                    end
+                    
+                    timex448 = mean(timexAll,3);
+                    time448 = mean(timeAll);
+                    skip = (iRun+1):(iRun+6);
+                    clear timexAll timeAll
+                end
+                
+                % if number of rotations is 448
+            elseif rotations == 448
+                cubeName = fullfile(fileList(iRun).folder,fileList(iRun).name);;
+                load(cubeName,'Azi','Rg','timex','timeInt','results');
+                
+                % in case timex variable doesn't exist
+                if ~exist('timex','var') || isempty(timex)
+                    load(cubeName,'data')
+                    timex = double(mean(data,3));
+                else
+                end
+                
+                time448 = mean(epoch2Matlab(timeInt(:)));
+                timex448 = timex;
+                skip = 0;
+                clear timex
+                
+                % if number of rotations is greater than 448 but less than 2*448,
+                % used only first 448 rotations and ignore the rest
+            elseif rotations > 448 && rotations < 448*2
+                cubeName = fullfile(fileList(iRun).folder,fileList(iRun).name);
+                load(cubeName,'Azi','Rg','data','timeInt','results');
+                data448 = data(:,:,1:448);
+                timex448 = mean(data448,3);
+                timeInt448 = timeInt(:,1:448);
+                time448 = mean(epoch2Matlab(timeInt448(:)));
+                clear data448 timeInt448
+                skip = 0;
+                
+                % if number of rotations greater than 2*448, separate into
+                % multiple timex448 matrices
+            elseif rotations >= 448*2
+                load(cubeName,'Azi','Rg','data','timeInt','results');
+                for RR = 1:floor(size(data,3)/448)
+                    data448 = data(:,:,(1+448*(RR-1)):(448+448*(RR-1)));
+                    timex448(:,:,RR) = mean(data448,3);
+                    timeInt448 = timeInt(:,1:448);
+                    time448(RR) = mean(epoch2Matlab(timeInt448(:)));
+                    clear data448 timeInt448
+                end
+                skip = 0;
+            end
+            
+            if exist('Rg')
+                % set rotation(so shoreline is parallel to edge of plot)
+                heading = results.heading-domainRotation;
+                [AZI,RG] = meshgrid(Azi,Rg(16:xCutoff));
+                
+                % set up domain
+                [XX,YY] = meshgrid(xC,yC);
+                [thC,rgC] = cart2pol(XX,YY);
+                aziC = wrapTo360(90 - thC*180/pi - heading);
+                
+                % set up domain
+                [XX,YY] = meshgrid(xC,yC);
+                [thC,rgC] = cart2pol(XX,YY);
+                aziC = wrapTo360(90 - thC*180/pi - heading);
+                
+                % rotate domain
+                for tt = 1:size(timex448,3)
+                    
+                    % rotate domain
+                    tC = interp2(AZI,RG,double(timex448(16:xCutoff,:,tt)),aziC',rgC');
+                    timeScan = time448(:);
+                    dv = datevec(timeScan);
+                    
+                    fig100 = figure('visible','off');
+                    fig100.PaperUnits = 'inches';
+                    fig100.PaperPosition = [0 0 6 4];
+                    subplot(1,2,1)
+                    pcolor(XX,YY,tC')
+                    shading flat; axis image;
+                    colormap(hot)
+                    caxis([10 220])
+                    hold on
+                    plot(xCMaxI(idxMaxI(iRun,:)-100),yC,'b')
+                    ttl100 = ['2017-' num2str(months(iDay),'%02d') '-'...
+                        num2str(days(iDay),'%02d') ' ' num2str(dv(4),'%02d') ':' num2str(dv(5),'%02d') ':' num2str(round(dv(6)),'%02d')];
+                    title(ttl100)
+                    
+                    hold on
+                    s2 = subplot(1,2,2);
+                    pcolor(times,yC,TMat100');
+                    shading flat
+                    hold on
+                    y1 = get(gca,'ylim');
+                    plot([timeScan timeScan],y1,'r','LineWidth',1)
+                    colormap(s2,cMap)
+                    %         colorbar
+                    datetick('x',6)
+                    caxis([cAxisLims(1) cAxisLims(2)])
+                    axis([dn1 dnEnd yC(1) yC(end)])
+                    figttl100 = [saveDir '100\' fileList(iRun).name(1:21) '_100.png'];
+                    ttl100_2 = 'Timestack 100 m from max intensity';
+                    title(ttl100_2)
+                    
+                    fig75 = figure('visible','off');
+                    fig75.PaperUnits = 'inches';
+                    fig75.PaperPosition = [0 0 6 4];
+                    subplot(1,2,1)
+                    pcolor(XX,YY,tC')
+                    shading flat; axis image;
+                    colormap(hot)
+                    caxis([10 220])
+                    hold on
+                    y1 = get(gca,'ylim');
+                    plot(xCMaxI(idxMaxI(iRun,:)-75),yC,'b','LineWidth',1)
+                    ttl75 = ['2017-' num2str(months(iDay),'%02d') '-'...
+                        num2str(days(iDay),'%02d') ' ' num2str(dv(4),'%02d') ':' num2str(dv(5),'%02d') ':' num2str(round(dv(6)),'%02d')];
+                    title(ttl75)
+                    
+                    hold on
+                    s22 =subplot(1,2,2);
+                    pcolor(times,yC,TMat75');
+                    shading flat
+                    hold on
+                    colormap(s22,cMap)
+                    %         colorbar
+                    plot([timeScan timeScan],y1,'r','LineWidth',1)
+                    datetick('x',6)
+                    caxis([cAxisLims(1) cAxisLims(2)])
+                    axis([dn1 dnEnd yC(1) yC(end)])
+                    ttl75_2 = 'Timestack 75 m from max intensity';
+                    title(ttl75_2)
+                    figttl75 = [saveDir '75\' fileList(iRun).name(1:21) '_75.png'];
+                    
+                    fig150 = figure('visible','off');
+                    fig150.PaperUnits = 'inches';
+                    fig150.PaperPosition = [0 0 6 4];
+                    subplot(1,2,1)
+                    pcolor(XX,YY,tC')
+                    shading flat; axis image;
+                    colormap(hot)
+                    caxis([10 220])
+                    hold on
+                    y1 = get(gca,'ylim');
+                    plot(xCMaxI(idxMaxI(iRun,:)-150),yC,'b','LineWidth',1)
+                    ttl150 = ['2017-' num2str(months(iDay),'%02d') '-'...
+                        num2str(days(iDay),'%02d') ' ' num2str(dv(4),'%02d') ':' num2str(dv(5),'%02d') ':' num2str(round(dv(6)),'%02d')];
+                    title(ttl150)
+                    
+                    hold on
+                    s23 =subplot(1,2,2);
+                    pcolor(times,yC,TMat150');
+                    shading flat
+                    hold on
+                    colormap(s23,cMap)
+                    %         colorbar
+                    plot([timeScan timeScan],y1,'r','LineWidth',1)
+                    datetick('x',6)
+                    caxis([cAxisLims(1) cAxisLims(2)])
+                    axis([dn1 dnEnd yC(1) yC(end)])
+                    ttl150_2 = 'Timestack 150 m from max intensity';
+                    title(ttl150_2)
+                    figttl150 = [saveDir '150\' fileList(iRun).name(1:21) '_150.png'];
+                      
+                    fig200 = figure('visible','off');
+                    fig200.PaperUnits = 'inches';
+                    fig200.PaperPosition = [0 0 6 4];
+                    subplot(1,2,1)
+                    pcolor(XX,YY,tC')
+                    shading flat; axis image;
+                    colormap(hot)
+                    caxis([10 220])
+                    hold on
+                    y1 = get(gca,'ylim');
+                    plot(xCMaxI(idxMaxI(iRun,:)-200),yC,'b','LineWidth',1)
+                    ttl200 = ['2017-' num2str(months(iDay),'%02d') '-'...
+                        num2str(days(iDay),'%02d') ' ' num2str(dv(4),'%02d') ':' num2str(dv(5),'%02d') ':' num2str(round(dv(6)),'%02d')];
+                    title(ttl200)
+                    
+                    hold on
+                    s24 = subplot(1,2,2);
+                    pcolor(times,yC,TMat200');
+                    shading flat
+                    hold on
+                    colormap(s24,cMap)
+                    %         colorbar
+                    plot([timeScan timeScan],y1,'r','LineWidth',1)
+                    datetick('x',6)
+                    caxis([cAxisLims(1) cAxisLims(2)])
+                    axis([dn1 dnEnd yC(1) yC(end)])
+                    ttl200_2 = 'Timestack 200 m from max intensity';
+                    title(ttl200_2)
+                    figttl200 = [saveDir '200\' fileList(iRun).name(1:21) '_200.png'];
+                    
+                    %print figs
+                    print(fig100, figttl100, '-dpng')
+                    print(fig75, figttl75, '-dpng')
+                    print(fig150, figttl150, '-dpng')
+                    print(fig200, figttl200, '-dpng')
+                end
+            end
+            
+            close all; clear Rg
+        end
+
+    end
+clear cubeRots
 end
 
+    

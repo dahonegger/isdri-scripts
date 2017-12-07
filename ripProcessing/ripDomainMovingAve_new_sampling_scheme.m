@@ -1,22 +1,22 @@
-% ripDomainMovingAve.m
+% ripDomainMovingAve_new_sampling_scheme.m
 % 9/17/2017
 clear variables; home
 
 addpath(genpath('C:\Data\ISDRI\isdri-scripts'));
 
 %% define time of interest
-startTime = '20171007_1900';
-endTime = '20171008_0200';
+startTime = '20171010_1820';
+endTime = '20171011_0600';
 
 saveFolder = ['C:\Data\ISDRI\postprocessed\ripVideos\' startTime '-' endTime];
 mkdir(saveFolder)
 
 %% define figure parameters
-colorAxisLimits = [10 200];
-XYLimits = [-1300 -500; -300 2900];
+colorAxisLimits = [30 200];
+XYLimits = [-1500 -500; -1000 1000];
 
 %% make list of cubes
-Hub = 'F'; 
+Hub = 'F';
 dataFolder = [Hub ':\guadalupe\processed\' startTime(1:4) '-' startTime(5:6)...
     '-' startTime(7:8)];
 cd(dataFolder)
@@ -36,13 +36,13 @@ end
 if str2num(startTime(5:6)) == 9
     firstDay = num2str(243 + str2num(startTime(7:8)));
     lastDay = num2str(243 + str2num(endTime(7:8)));
-    firstFile = ['Guadalupe_2017' firstDay startTime(10:11) '00_pol.mat'];
-    lastFile = ['Guadalupe_2017' lastDay endTime(10:11) '00_pol.mat'];
+    firstFile = ['Guadalupe_2017' firstDay startTime(10:11) startTime(12:13) '_pol.mat'];
+    lastFile = ['Guadalupe_2017' lastDay endTime(10:11) endTime(12:13) '_pol.mat'];
 else
-    firstDay = num2str(243 + str2num(startTime(7:8)));
-    lastDay = num2str(243 + str2num(endTime(7:8)));
-    firstFile = ['Guadalupe_2017' firstDay startTime(10:11) '00_pol.mat'];
-    lastFile = ['Guadalupe_2017' lastDay endTime(10:11) '00_pol.mat'];
+    firstDay = num2str(273 + str2num(startTime(7:8)));
+    lastDay = num2str(273 + str2num(endTime(7:8)));
+    firstFile = ['Guadalupe_2017' firstDay startTime(10:11) startTime(12:13) '_pol.mat'];
+    lastFile = ['Guadalupe_2017' lastDay endTime(10:11) endTime(12:13) '_pol.mat'];
 end
 firstFileIndex = find(strcmp(firstFile,cubeListAll)==1);
 lastFileIndex = find(strcmp(lastFile,cubeListAll)==1);
@@ -50,7 +50,7 @@ cubeList = cubeListAll(firstFileIndex:lastFileIndex);
 
 %% Load data from 512 rotation runs
 xCutoff = 1068; % range index for clipped scan
-rotation = 11; % domain rotation
+rotation = 13; % domain rotation
 imgNum = 1;
 for i = 1:length(cubeList)
     % Load radar data
@@ -66,9 +66,10 @@ for i = 1:length(cubeList)
         '-' num2str(day,'%02i')];
     cd(folder)
     
-    if strcmp(cube(20:21),'00')
-        load(cubeList{i},'Azi','Rg','results','data','timeInt')
-        
+    load(cubeList{i},'Azi','Rg','results','data','timex','timeInt')
+    numRotations = size(data,3);
+    
+    if numRotations > 200
         % define time vector
         
         t_dn = datenum([str2num(cube(11:14)),mth,...
@@ -79,7 +80,7 @@ for i = 1:length(cubeList)
         % set rotation(so shoreline is parallel to edge of plot)
         heading = results.heading-rotation;
         [AZI,RG] = meshgrid(Azi,Rg(16:xCutoff));
-         
+        
         % interpolate onto a smaller cartesian grid
         xC = XYLimits(2,1):XYLimits(2,2);
         yC = XYLimits(1,1):XYLimits(1,2);
@@ -87,8 +88,8 @@ for i = 1:length(cubeList)
         [thC,rgC] = cart2pol(XX,YY);
         aziC = wrapTo360(90 - thC*180/pi - heading);
         
-        tC = zeros(length(xC),length(yC),512);
-        for rot = 1:512
+        tC = zeros(length(xC),length(yC),numRotations);
+        for rot = 1:numRotations
             scanClipped = (double(data(16:xCutoff,:,rot)));
             tCR = interp2(AZI,RG,scanClipped,aziC',rgC');
             tC(:,:,rot) = tCR';
@@ -107,14 +108,14 @@ for i = 1:length(cubeList)
         [yUTM_JM, xUTM_JM] = ll2UTM(latJM,lonJM);
         X_JM = xUTM_JM - results.XOrigin;
         Y_JM = yUTM_JM - results.YOrigin;
-
+        
         % rotate onto the same grid
         [thJM,rgJM] = cart2pol(X_JM,Y_JM);
         aziJM = wrapTo360(-thJM*180/pi + 90 - results.heading);
         aziJMC = aziJM - rotation;
         thJMC = pi/180*(90 - aziJMC - results.heading);
         [xJMC,yJMC] = pol2cart(thJMC,rgJM);
-   
+        
         % add Oceanus instruments
         % find coordinates of Oceanus instruments
         latOc = [35.004242 35.004128 34.985083 35.005967 34.995867 35.0207...
@@ -135,7 +136,7 @@ for i = 1:length(cubeList)
         [xOcC,yOcC] = pol2cart(thOcC,rgOc);
         
         % make .pngs
-        for s = 1:rate:512
+        for s = 1:rate:numRotations
             fig = figure('visible','off');
             fig.PaperUnits = 'inches';
             fig.PaperPosition = [0 0 4 6];
@@ -158,8 +159,7 @@ for i = 1:length(cubeList)
             clear ttl ttlFig
         end
         
-    elseif ~strcmp(cube(20:21),'00')
-        load(cubeList{i},'Azi','Rg','results','timex','timeInt')
+    elseif numRotations <= 200
         
         % define time vector
         t_dn = datenum([str2num(cube(11:14)),mth,...
@@ -188,14 +188,14 @@ for i = 1:length(cubeList)
         [yUTM_JM, xUTM_JM] = ll2UTM(latJM,lonJM);
         X_JM = xUTM_JM - results.XOrigin;
         Y_JM = yUTM_JM - results.YOrigin;
-
+        
         % rotate onto the same grid
         [thJM,rgJM] = cart2pol(X_JM,Y_JM);
         aziJM = wrapTo360(-thJM*180/pi + 90 - results.heading);
         aziJMC = aziJM - rotation;
         thJMC = pi/180*(90 - aziJMC - results.heading);
         [xJMC,yJMC] = pol2cart(thJMC,rgJM);
-   
+        
         % add Oceanus instruments
         % find coordinates of Oceanus instruments
         latOc = [35.004242 35.004128 34.985083 35.005967 34.995867 35.0207...
