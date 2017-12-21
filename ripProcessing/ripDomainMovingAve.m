@@ -5,18 +5,19 @@ clear variables; home
 addpath(genpath('C:\Data\ISDRI\isdri-scripts'));
 
 %% define time of interest
-startTime = '20170912_1900';
-endTime = '20170913_0100';
+startTime = '20170912_1800';
+endTime = '20170913_0200';
 
-saveFolder = ['C:\Data\ISDRI\postprocessed\ripVideos\' startTime '-' endTime];
+saveFolder = ['C:\Data\ISDRI\postprocessed\ripVideos3\' startTime '-' endTime];
 mkdir(saveFolder)
 
 %% define figure parameters
 colorAxisLimits = [10 200];
-XYLimits = [-1300 -500; -300 2900];
+% XYLimits = [-1300 -500; -300 2900];
+XYLimits = [-1200 -500; -800 800];
 
 %% make list of cubes
-Hub = 'F'; 
+Hub = 'E'; 
 dataFolder = [Hub ':\guadalupe\processed\' startTime(1:4) '-' startTime(5:6)...
     '-' startTime(7:8)];
 cd(dataFolder)
@@ -50,9 +51,9 @@ cubeList = cubeListAll(firstFileIndex:lastFileIndex);
 
 %% Load data from 512 rotation runs
 xCutoff = 1068; % range index for clipped scan
-rotation = 11; % domain rotation
+rotation = 13; % domain rotation
 imgNum = 1;
-for i = 1:length(cubeList)
+for i = 2:length(cubeList)
     % Load radar data
     cube = cubeList{i}; dayNum = str2num(cube(15:17));
     if dayNum < 273
@@ -70,11 +71,13 @@ for i = 1:length(cubeList)
         load(cubeList{i},'Azi','Rg','results','data','timeInt')
         
         % define time vector
-        
-        t_dn = datenum([str2num(cube(11:14)),mth,...
-            day,str2num(cube(18:19)),0,0])...
-            + ((timeInt(1,:) - timeInt(1,1)))/60/60/24;
+        timeVec = mean(timeInt);
+        t_dn = epoch2Matlab(timeVec);
         t_dv = datevec(t_dn);
+%         t_dn = datenum([str2num(cube(11:14)),mth,...
+%             day,str2num(cube(18:19)),0,0])...
+%             + ((timeInt(1,:) - timeInt(1,1)))/60/60/24;
+%         t_dv = datevec(t_dn);
         
         % set rotation(so shoreline is parallel to edge of plot)
         heading = results.heading-rotation;
@@ -148,8 +151,8 @@ for i = 1:length(cubeList)
             colorbar
             caxis([colorAxisLimits(1) colorAxisLimits(2)])
             axis([XYLimits(1,1) XYLimits(1,2) XYLimits(2,1) XYLimits(2,2)])
-            ttl = sprintf('%d%02i%d%s%d%s%02i%s%02i', t_dv(s,1), t_dv(s,2), t_dv(s,3), ' - ',...
-                t_dv(s,4), ':', t_dv(s,5), ':', round(t_dv(s,6)));
+            ttl = [num2str(t_dv(s,1)) num2str(t_dv(s,2),'%02i') num2str(t_dv(s,3),'%02i') ' - ',...
+                num2str(t_dv(s,4),'%02i') ':', num2str(t_dv(s,5),'%02i') ':' num2str(round(t_dv(s,6)),'%02i')];
             title(ttl)
             ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
             imgNum=imgNum+1;
@@ -228,8 +231,8 @@ for i = 1:length(cubeList)
             plot(xOcC,yOcC,'g.','MarkerSize',20)
             caxis([colorAxisLimits(1) colorAxisLimits(2)])
             axis([XYLimits(1,1) XYLimits(1,2) XYLimits(2,1) XYLimits(2,2)])
-            ttl = sprintf('%d%02i%d%s%d%s%02i%s%02i', t_dv(1), t_dv(2), t_dv(3), ' - ',...
-                t_dv(4), ':', t_dv(5), ':', round(t_dv(6)));
+            ttl = [num2str(t_dv(1)) num2str(t_dv(2),'%02i') num2str(t_dv(3),'%02i') ' - ',...
+                num2str(t_dv(4),'%02i') ':', num2str(t_dv(5),'%02i') ':' num2str(round(t_dv(6)),'%02i')];
             title(ttl)
             ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
             imgNum=imgNum+1;

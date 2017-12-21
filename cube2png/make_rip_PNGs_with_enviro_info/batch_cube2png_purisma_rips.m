@@ -1,22 +1,18 @@
-
 %% USER INPUTS
 % add paths to CTR HUB Support Data and GitHub Repository
-Hub = 'E:\';
 
 % SUPPORT DATA PATH
-% supportDataPath = 'D:\Data\ISDRI\SupportData'; % LENOVO HARD DRIVE
-
-supportDataPath = [Hub 'SupportData']; % HUB 
+supportDataPath = 'E:\supportData\'; % LENOVO HARD DRIVE
+% supportDataPath = 'E:\SupportData'; %CTR HUB 
 
 % GITHUB DATA PATH
 addpath(genpath('C:\Data\ISDRI\isdri-scripts')) %GITHUB REPOSITORY
 
 % MAT FILES LOCATION
-baseDir = [Hub 'guadalupe\processed\']; % HUB
+baseDir = 'E:\purisima\processed\'; % HUB 1
 
 % PNG LOCATION
-% saveDir = 'C:\Data\ISDRI\postprocessed\ripCurrentTimex_with_Instruments\'; % LENOVO HARD DRIVE
-saveDir = [Hub 'guadalupe\postprocessed\ripCurrentTimex_with_Instruments\']; % HUB
+saveDir = 'E:\purisima\postprocessed\rip_enviro_info\'; % HUB
 
 % rewrite existing files in save directory? true=yes
 doOverwrite = false;
@@ -69,7 +65,7 @@ for iDay = 1:length(dayFolder)
             else
                 fprintf('%s ...',cubeBaseName)
 %                 try
-                    cube2png_guadalupe_enviro_rips(cubeName,pngName)
+                    cube2png_purisima_enviro_rips(cubeName,pngName)
                     fprintf('Done.\n')
 %                 catch
 %                     fid = fopen(['FAILED_on_file_',pngBaseName,'.txt'], 'wt' );
