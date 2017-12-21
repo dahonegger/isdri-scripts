@@ -1,30 +1,26 @@
 
 %% USER INPUTS
 % add paths to CTR HUB Support Data and GitHub Repository
-Hub = 'E:\';
-
 % SUPPORT DATA PATH
-% supportDataPath = 'D:\Data\ISDRI\SupportData'; % LENOVO HARD DRIVE
-
-supportDataPath = [Hub 'SupportData']; % HUB 
+supportDataPath = 'D:\Data\ISDRI\SupportData'; % LENOVO HARD DRIVE
+% supportDataPath = 'E:\SupportData'; %CTR HUB 
 
 % GITHUB DATA PATH
 addpath(genpath('C:\Data\ISDRI\isdri-scripts')) %GITHUB REPOSITORY
 
 % MAT FILES LOCATION
-baseDir = [Hub 'guadalupe\processed\']; % HUB
+baseDir = 'F:\guadalupe\processed\'; % HUB 1
 
 % PNG LOCATION
-% saveDir = 'C:\Data\ISDRI\postprocessed\ripCurrentTimex_with_Instruments\'; % LENOVO HARD DRIVE
-saveDir = [Hub 'guadalupe\postprocessed\ripCurrentTimex_with_Instruments\']; % HUB
+saveDir = 'C:\Data\ISDRI\postprocessed\ripCurrentTimex_with_Instruments\'; % LENOVO HARD DRIVE
 
 % rewrite existing files in save directory? true=yes
 doOverwrite = false;
 
 % Download new support data files?
 downloadWind = true;
-downloadWaves = false;
-downloadTides = false;
+downloadWaves = true;
+downloadTides = true;
 
 %% Prep files
 % make save directory
@@ -35,11 +31,11 @@ dayFolder = dir([baseDir,'2017*']);
 
 % download environmental files
 % WIND: buoy number, save directory, save fname
-if downloadWind; fetchWindNDBC(46011,fullfile(supportDataPath,'Wind'),'MetData_NDBC46011.txt'); end 
+if downloadWind;fetchWindNDBC(46011,fullfile(supportDataPath,'Wind'),'MetData_NDBC46011.txt'); end 
 % WAVES: save directory, save fname 
 if downloadWaves; fetchWavesNDBC(46011,fullfile(supportDataPath,'Waves'),'WaveData_NDBC46011.txt');end
 % TIDES: save directory, save fname 
-endTime = '20171115'; startTime = '20171029';
+endTime = '20171012'; startTime = '20170913';
 if downloadTides; fetchTidesNOAA(9411406,fullfile(supportDataPath,'Tides'),'TideData_NOAA9411406.txt',startTime,endTime);end
 
 %% Process Files 
@@ -50,7 +46,7 @@ for iDay = 1:length(dayFolder)
     saveDirSub = [saveDir,dayFolder(iDay).name];
     if ~exist(saveDirSub);mkdir(saveDirSub);end
     
-        for iRun = 64:length(dayFolder(iDay).polRun)
+        for iRun = 1:length(dayFolder(iDay).polRun)
             
             fprintf('%3.f of %3.f in dir %3.f of %3.f: ',...
                 iRun,length(dayFolder(iDay).polRun),...
