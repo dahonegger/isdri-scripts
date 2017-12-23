@@ -1,4 +1,4 @@
-function cube2png_guadalupe_enviro_rips(cubeFile,pngFile)
+function cube2png_guadalupe_enviro_rips_longRuns(cubeFile,pngFile)
 % Originally 'cube2timex.m' by David Honegger
 % Updated by Alex Simpson to show tide, wind, discharge data
 % Updated by Annika O'Dea to show waves instead of discharge at the
@@ -18,7 +18,7 @@ userOriginLonLat        = [];   % Use these lat-lon origin coords
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LOAD DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Load radar data
-load(cubeFile,'Azi','Rg','results','timex','timeInt') % 6/16/17 with new process scheme, 'timex' available
+load(cubeFile,'Azi','Rg','results','timex','timeInt','data') % 6/16/17 with new process scheme, 'timex' available
 % [a, MSGID] = lastwarn();warning('off', MSGID);
 if ~exist('timex','var') || isempty(timex)
     load(cubeFile,'data')
@@ -39,43 +39,36 @@ yC = -1200:-500;
 aziC = wrapTo360(90 - thC*180/pi - heading);
 
 % Handle long runs (e.g. 18 minutes
-if (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 < 142
-    tC = interp2(AZI,RG,double(timex(16:668,:)),aziC',rgC');
-    timexCell{1} = tC;
-    timeIntCell{1} = mean(timeInt);
-    pngFileCell{1} = pngFile;
-    clear timex
-elseif (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 > 142
-    load(cubeFile,'data')
-    ii = 1;
-    if size(data,3) > 64*2
-        for i = 1:64:(floor(size(data,3)/64))*64 - 64
-            tC = interp2(AZI,RG,double(mean(data(16:668,:,i:i+64),3)),aziC',rgC');
-            timexCell{ii} = tC;
-            timeIntCell{ii} = timeInt(1,i:i+64);
-            [path,fname,ext] = fileparts(pngFile);
-            tmp = datestr(epoch2Matlab(mean(timeIntCell{ii})),'HHMM');
-            fname = [fname(1:17),tmp,'_pol_timex'];
-            pngFileCell{ii} = fullfile(path,[fname,ext]);
-            
-            ii = ii+1;
-            clear tC
-        end
-    else
-        for i = 1:64:(floor(size(data,3)/64))*64
-            tC = interp2(AZI,RG,double(mean(data(16:668,:,i:i+64),3)),aziC',rgC');
-            timexCell{ii} = tC;
-            timeIntCell{ii} = timeInt(1,i:i+64);
-            [path,fname,ext] = fileparts(pngFile);
-            tmp = datestr(epoch2Matlab(mean(timeIntCell{ii})),'HHMM');
-            fname = [fname(1:17),tmp,'_pol_timex'];
-            pngFileCell{ii} = fullfile(path,[fname,ext]);
-            
-            ii = ii+1;
-            clear tC
-        end
+
+ii = 1;
+if size(data,3) > 64*2
+    for i = 1:64:(floor(size(data,3)/64))*64 - 64
+        tC = interp2(AZI,RG,double(mean(data(16:668,:,i:i+64),3)),aziC',rgC');
+        timexCell{ii} = tC;
+        timeIntCell{ii} = timeInt(1,i:i+64);
+        [path,fname,ext] = fileparts(pngFile);
+        tmp = datestr(epoch2Matlab(mean(timeIntCell{ii})),'HHMM');
+        fname = [fname(1:17),tmp,'_pol_timex'];
+        pngFileCell{ii} = fullfile(path,[fname,ext]);
+        
+        ii = ii+1;
+        clear tC
+    end
+else
+    for i = 1:64:(floor(size(data,3)/64))*64
+        tC = interp2(AZI,RG,double(mean(data(16:668,:,i:i+64),3)),aziC',rgC');
+        timexCell{ii} = tC;
+        timeIntCell{ii} = timeInt(1,i:i+64);
+        [path,fname,ext] = fileparts(pngFile);
+        tmp = datestr(epoch2Matlab(mean(timeIntCell{ii})),'HHMM');
+        fname = [fname(1:17),tmp,'_pol_timex'];
+        pngFileCell{ii} = fullfile(path,[fname,ext]);
+        
+        ii = ii+1;
+        clear tC
     end
 end
+
 
 % find coordinates of MacMahan instruments
 latJM = [34.9826 34.981519 34.981131 34.980439 34.98035 34.985969];

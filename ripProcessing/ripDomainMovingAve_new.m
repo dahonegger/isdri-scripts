@@ -5,8 +5,8 @@ clear variables; home
 addpath(genpath('C:\Data\ISDRI\isdri-scripts'));
 
 %% define time of interest
-startTime = '20170912_1800';
-endTime = '20170913_0200';
+startTime = '20171017_1615';
+endTime = '20171018_0230';
 
 saveFolder = ['C:\Data\ISDRI\postprocessed\ripVideos2\' startTime '-' endTime];
 mkdir(saveFolder)
@@ -14,7 +14,7 @@ mkdir(saveFolder)
 %% define figure parameters
 colorAxisLimits = [30 200];
 % XYLimits = [-1300 -500; -300 2900];
-XYLimits = [-1200 -500; -800 800];
+XYLimits = [-1300 -500; -700 1000];
 
 %% make list of cubes
 Hub = 'E'; 
@@ -37,13 +37,17 @@ end
 if str2num(startTime(5:6)) == 9
     firstDay = num2str(243 + str2num(startTime(7:8)));
     lastDay = num2str(243 + str2num(endTime(7:8)));
-    firstFile = ['Guadalupe_2017' firstDay startTime(10:11) '00_pol.mat'];
-    lastFile = ['Guadalupe_2017' lastDay endTime(10:11) '00_pol.mat'];
+    firstFile = ['Guadalupe_2017' firstDay startTime(10:11)...
+        startTime(12:13) '_pol.mat'];
+    lastFile = ['Guadalupe_2017' lastDay endTime(10:11)...
+        endTime(12:13) '00_pol.mat'];
 else
-    firstDay = num2str(243 + str2num(startTime(7:8)));
-    lastDay = num2str(243 + str2num(endTime(7:8)));
-    firstFile = ['Guadalupe_2017' firstDay startTime(10:11) '00_pol.mat'];
-    lastFile = ['Guadalupe_2017' lastDay endTime(10:11) '00_pol.mat'];
+    firstDay = num2str(273 + str2num(startTime(7:8)));
+    lastDay = num2str(273 + str2num(endTime(7:8)));
+    firstFile = ['Guadalupe_2017' firstDay startTime(10:11)...
+        startTime(12:13) '_pol.mat'];
+    lastFile = ['Guadalupe_2017' lastDay endTime(10:11)...
+        endTime(12:13) '_pol.mat'];
 end
 firstFileIndex = find(strcmp(firstFile,cubeListAll)==1);
 lastFileIndex = find(strcmp(lastFile,cubeListAll)==1);
@@ -67,7 +71,8 @@ for i = 1:length(cubeList)
         '-' num2str(day,'%02i')];
     cd(folder)
     
-    if strcmp(cube(20:21),'00')
+    load(cubeList{i},'timeInt')
+    if size(timeInt,2) > 65
         load(cubeList{i},'Azi','Rg','results','data','timeInt')
         
         % define time vector
@@ -90,15 +95,37 @@ for i = 1:length(cubeList)
         [thC,rgC] = cart2pol(XX,YY);
         aziC = wrapTo360(90 - thC*180/pi - heading);
         
-        tC = zeros(length(xC),length(yC),512);
-        for rot = 1:512
-            scanClipped = (double(data(16:xCutoff,:,rot)));
+        % cut cube into 3 to make it easier to use
+        c3 = round(size(data,3)/3);
+        cube1 = data(:,:,(1:c3+30));
+        cube2 = data(:,:,(c3-30):(2*c3+30));
+        cube3 = data(:,:,(2*c3-30):end);
+        tC1 = zeros(length(xC),length(yC),size(cube1,3));
+        tC2 = zeros(length(xC),length(yC),size(cube2,3));
+        tC3 = zeros(length(xC),length(yC),size(cube3,3));
+        for rot = 1:size(cube1,3)
+            scanClipped = (double(cube1(16:xCutoff,:,rot)));
             tCR = interp2(AZI,RG,scanClipped,aziC',rgC');
-            tC(:,:,rot) = tCR';
+            tC1(:,:,rot) = tCR';
+            clear tCR scanClipped
+        end
+        for rot = 1:size(cube2,3)
+            scanClipped = (double(cube2(16:xCutoff,:,rot)));
+            tCR = interp2(AZI,RG,scanClipped,aziC',rgC');
+            tC2(:,:,rot) = tCR';
+            clear tCR scanClipped
+        end
+        for rot = 1:size(cube3,3)
+            scanClipped = (double(cube3(16:xCutoff,:,rot)));
+            tCR = interp2(AZI,RG,scanClipped,aziC',rgC');
+            tC3(:,:,rot) = tCR';
+            clear tCR scanClipped
         end
         
         % run 2 minute moving average
-        movingAve = movmean(tC,96,3);
+        movingAve = movmean(tC1,96,3);
+        movingAve = movmean(tC2,96,3);
+        movingAve = movmean(tC3,96,3);
         rate = 8;
         
         % add MacMahan's instruments
@@ -161,7 +188,7 @@ for i = 1:length(cubeList)
             clear ttl ttlFig
         end
         
-    elseif ~strcmp(cube(20:21),'00')
+    elseif size(timeInt,2) < 65
         load(cubeList{i},'Azi','Rg','results','timex','timeInt')
         
         % define time vector

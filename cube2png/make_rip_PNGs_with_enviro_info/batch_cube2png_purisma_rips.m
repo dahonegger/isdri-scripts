@@ -3,7 +3,7 @@
 
 % SUPPORT DATA PATH
 supportDataPath = 'E:\supportData\'; % LENOVO HARD DRIVE
-% supportDataPath = 'E:\SupportData'; %CTR HUB 
+% supportDataPath = 'E:\SupportData'; %CTR HUB
 
 % GITHUB DATA PATH
 addpath(genpath('C:\Data\ISDRI\isdri-scripts')) %GITHUB REPOSITORY
@@ -24,29 +24,30 @@ downloadTides = false;
 
 %% Prep files
 % make save directory
-addpath(genpath(supportDataPath)) 
+addpath(genpath(supportDataPath))
 
 if ~exist(saveDir);mkdir(saveDir);end
 dayFolder = dir([baseDir,'2017*']);
 
 % download environmental files
 % WIND: buoy number, save directory, save fname
-if downloadWind; fetchWindNDBC(46011,fullfile(supportDataPath,'Wind'),'MetData_NDBC46011.txt'); end 
-% WAVES: save directory, save fname 
+if downloadWind; fetchWindNDBC(46011,fullfile(supportDataPath,'Wind'),'MetData_NDBC46011.txt'); end
+% WAVES: save directory, save fname
 if downloadWaves; fetchWavesNDBC(46011,fullfile(supportDataPath,'Waves'),'WaveData_NDBC46011.txt');end
-% TIDES: save directory, save fname 
+% TIDES: save directory, save fname
 endTime = '20171115'; startTime = '20171029';
 if downloadTides; fetchTidesNOAA(9411406,fullfile(supportDataPath,'Tides'),'TideData_NOAA9411406.txt',startTime,endTime);end
 
-%% Process Files 
+%% Process Files
 imgId = 1;
-for iDay = 1:length(dayFolder)
+for iDay = 9:length(dayFolder)
+    if iDay == 9 || iDay == 28 
+    else
+        dayFolder(iDay).polRun = dir(fullfile(baseDir,dayFolder(iDay).name,'*_pol.mat'));
+        saveDirSub = [saveDir,dayFolder(iDay).name];
+        if ~exist(saveDirSub);mkdir(saveDirSub);end
         
-    dayFolder(iDay).polRun = dir(fullfile(baseDir,dayFolder(iDay).name,'*_pol.mat'));
-    saveDirSub = [saveDir,dayFolder(iDay).name];
-    if ~exist(saveDirSub);mkdir(saveDirSub);end
-    
-        for iRun = 1:length(dayFolder(iDay).polRun)
+        for iRun = 99:length(dayFolder(iDay).polRun)
             
             fprintf('%3.f of %3.f in dir %3.f of %3.f: ',...
                 iRun,length(dayFolder(iDay).polRun),...
@@ -64,18 +65,18 @@ for iDay = 1:length(dayFolder)
                 fprintf('%s exists. Skipping ...\n',pngName)
             else
                 fprintf('%s ...',cubeBaseName)
-%                 try
-                    cube2png_purisima_enviro_rips(cubeName,pngName)
-                    fprintf('Done.\n')
-%                 catch
-%                     fid = fopen(['FAILED_on_file_',pngBaseName,'.txt'], 'wt' );
-%                     fclose(fid)
-%                 end
-                    
+                %                 try
+                cube2png_purisima_enviro_rips(cubeName,pngName)
+                fprintf('Done.\n')
+                %                 catch
+                %                     fid = fopen(['FAILED_on_file_',pngBaseName,'.txt'], 'wt' );
+                %                     fclose(fid)
+                %                 end
+                
             end
             
             imgId = imgId + 1;
-          end
-       
+        end
+    end
 end
       

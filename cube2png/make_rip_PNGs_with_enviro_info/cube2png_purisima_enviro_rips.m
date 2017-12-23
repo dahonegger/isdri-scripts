@@ -67,7 +67,7 @@ nowTime = epoch2Matlab(nanmean(timeInt(:))); % UTC
 [dnWind,magWind,dirWind] = loadWindNDBC('MetData_NDBC46011.txt', nowTime);
 
 % Load wave data from wave station file
-[dnWaves,Hs,dirWaves] = loadWavesNDBC('WaveData_NDBC46011_historical.txt');
+[dnWaves,Hs,dirWaves] = loadWavesNDBC('WaveData_NDBC46011.txt');
 [tmp tmp] = min(abs(dnWaves-nowTime));
 dirWaves = dirWaves(tmp);
 % Load tide data from tide station file
@@ -193,8 +193,8 @@ ycircle = sin(th);
 plot(axDir,xcircle,ycircle,'-k','linewidth',1.25);hold on
 % plot(axWind,.75*xcircle,.75*ycircle,'-','color',[.5 .5 .5],'linewidth',1.25)
 axis image;axis([-1.05 1.05 -1.05 1.05])
-[uWind vWind] = pol2cart((90-dirWaves)*pi/180, 1); 
-arrow([uWind vWind],[0 0],'baseangle',45,'width',Hs,'tipangle',25,'facecolor','blue','edgecolor','blue');
+[uWave vWave] = pol2cart((90-dirWaves)*pi/180, 1); 
+arrow([uWave vWave],[0 0],'baseangle',45,'width',Hs,'tipangle',25,'facecolor','blue','edgecolor','blue');
 [uText vText] = pol2cart((90-180-dirWaves)*pi/180,0.28); %position text off tip of arrow
 % text(uText,vText,[num2str(round(Hs,1)),' m/s'],'horizontalalignment','center','interpreter','latex')
 box on
