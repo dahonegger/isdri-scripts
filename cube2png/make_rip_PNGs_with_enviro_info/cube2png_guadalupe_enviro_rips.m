@@ -39,43 +39,50 @@ yC = -1200:-500;
 aziC = wrapTo360(90 - thC*180/pi - heading);
 
 % Handle long runs (e.g. 18 minutes
-if (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 < 142
+ii = 1;
+if size(timeInt,2) == 64
+    if ~exist('timex','var') || isempty(timex)
+        load(cubeFile,'data')
+        timex = double(nanmean(data,3));
+    else
+    end
     tC = interp2(AZI,RG,double(timex(16:668,:)),aziC',rgC');
     timexCell{1} = tC;
     timeIntCell{1} = mean(timeInt);
     pngFileCell{1} = pngFile;
     clear timex
-elseif (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 > 142
+elseif size(timeInt,2) > 64*2
     load(cubeFile,'data')
-    ii = 1;
-    if size(data,3) > 64*2
-        for i = 1:64:(floor(size(data,3)/64))*64 - 64
-            tC = interp2(AZI,RG,double(mean(data(16:668,:,i:i+64),3)),aziC',rgC');
-            timexCell{ii} = tC;
-            timeIntCell{ii} = timeInt(1,i:i+64);
-            [path,fname,ext] = fileparts(pngFile);
-            tmp = datestr(epoch2Matlab(mean(timeIntCell{ii})),'HHMM');
-            fname = [fname(1:17),tmp,'_pol_timex'];
-            pngFileCell{ii} = fullfile(path,[fname,ext]);
-            
-            ii = ii+1;
-            clear tC
-        end
-    else
-        for i = 1:64:(floor(size(data,3)/64))*64
-            tC = interp2(AZI,RG,double(mean(data(16:668,:,i:i+64),3)),aziC',rgC');
-            timexCell{ii} = tC;
-            timeIntCell{ii} = timeInt(1,i:i+64);
-            [path,fname,ext] = fileparts(pngFile);
-            tmp = datestr(epoch2Matlab(mean(timeIntCell{ii})),'HHMM');
-            fname = [fname(1:17),tmp,'_pol_timex'];
-            pngFileCell{ii} = fullfile(path,[fname,ext]);
-            
-            ii = ii+1;
-            clear tC
-        end
+    for i = 1:64:(floor(size(data,3)/64))*64 - 64
+        tC = interp2(AZI,RG,double(mean(data(16:668,:,i:i+64),3)),aziC',rgC');
+        timexCell{ii} = tC;
+        timeIntCell{ii} = timeInt(1,i:i+64);
+        [path,fname,ext] = fileparts(pngFile);
+        tmp = datestr(epoch2Matlab(mean(timeIntCell{ii})),'HHMM');
+        fname = [fname(1:17),tmp,'_pol_timex'];
+        pngFileCell{ii} = fullfile(path,[fname,ext]);
+        
+        ii = ii+1;
+        clear tC
+    end
+elseif size(timeInt,2) > 64 && size(timeInt,2) <= 64*2
+    load(cubeFile,'data')
+    for i = 1:64:(floor(size(data,3)/64))*64
+        tC = interp2(AZI,RG,double(mean(data(16:668,:,i:i+64),3)),aziC',rgC');
+        timexCell{ii} = tC;
+        timeIntCell{ii} = timeInt(1,i:i+64);
+        [path,fname,ext] = fileparts(pngFile);
+        tmp = datestr(epoch2Matlab(mean(timeIntCell{ii})),'HHMM');
+        fname = [fname(1:17),tmp,'_pol_timex'];
+        pngFileCell{ii} = fullfile(path,[fname,ext]);
+        
+        ii = ii+1;
+        clear tC
     end
 end
+
+if exist('timexCell') == 0 
+else
 
 % find coordinates of MacMahan instruments
 latJM = [34.9826 34.981519 34.981131 34.980439 34.98035 34.985969];
@@ -100,7 +107,7 @@ nowTime = epoch2Matlab(nanmean(timeInt(:))); % UTC
 dirWindR = dirWind - rotation; % rotate wind to be consistent with rotated domain
 
 % Load wave data from wave station file
-[dnWaves,Hs,dirWaves,~,~] = loadWavesNDBC_historical('WaveData_NDBC46011_historical.txt');
+[dnWaves,Hs,dirWaves,~,~] = loadWavesNDBC_historical('WaveData_NDBC46011.txt');
 
 % Load tide data from tide station file
 [dnTides,waterSurfaceElevation] = loadTidesNOAA('TideData_NOAA9411406.txt');
@@ -212,5 +219,5 @@ for IMAGEINDEX = 1:numel(timexCell)
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SAVE & CLOSE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     print(fig,'-dpng','-r100',pngFile)
     close(fig)
-    
+end
 end

@@ -1,29 +1,17 @@
+%% plotEnviroParameters.m - 
+
 %% USER INPUTS
 % add paths to CTR HUB Support Data and GitHub Repository
 % SUPPORT DATA PATH
 supportDataPath = 'D:\Data\ISDRI\SupportData'; % LENOVO HARD DRIVE
-% supportDataPath = 'E:\SupportData'; %CTR HUB 
 
 % GITHUB DATA PATH
 addpath(genpath('C:\Data\ISDRI\isdri-scripts')) %GITHUB REPOSITORY
 
-% MAT FILES LOCATION
-baseDir = 'F:\guadalupe\processed\'; % HUB 1
-
-% PNG LOCATION
-saveDir = 'C:\Data\ISDRI\postprocessed\ripCurrentTimex_enviroInfo\'; % LENOVO HARD DRIVE
-
-% rewrite existing files in save directory? true=yes
-doOverwrite = false;
-
-% Download new support data files?
-downloadWind = true;
-downloadWaves = true;
-downloadTides = true;
-
 %% create time series
-dn = datenum([2017,09,01,0,0,0]):1/24/2:datenum([2017,10,15,0,0,0]);
+dn = datenum([2017,09,01,0,0,0]):1/24/2:datenum([2017,10,5,21,0,0]);
 dv = datevec(dn);
+
 load('C:\Data\ISDRI\postprocessed\rips\dv_rips_purisma.mat')
 purismaRips = dv_rips;
 clear dv_rips
@@ -31,30 +19,15 @@ load('C:\Data\ISDRI\postprocessed\rips\dv_rips_guadalupe.mat')
 guadalupeRips = dv_rips;
 clear dv_rips
 
-%% Prep files
-% make save directory
-addpath(genpath(supportDataPath)) 
-
-if ~exist(saveDir);mkdir(saveDir);end
-dayFolder = dir([baseDir,'2017*']);
-
-%% download environmental files
-% WIND: buoy number, save directory, save fname
-if downloadWind;fetchWindNDBC(46011,fullfile(supportDataPath,'Wind'),'MetData_NDBC46011.txt'); end 
-% WAVES: save directory, save fname 
-if downloadWaves; fetchWavesNDBC(46011,fullfile(supportDataPath,'Waves'),'WaveData_NDBC46011.txt');end
-% % TIDES: save directory, save fname 
-% endTime = '20171015'; startTime = '20170916';
-% if downloadTides; fetchTidesNOAA(9411406,fullfile(supportDataPath,'Tides'),'TideData_NOAA9411406.txt',startTime,endTime);end
 
 %% Load wind data from wind station file
-[dnWind,magWind,dirWind] = loadWindNDBC('MetData_NDBC46011.txt');
+[dnWind,magWind,dirWind] = loadWindNDBC('D:\Data\ISDRI\SupportData\Wind\MetData_NDBC46011.txt');
 
 % Load wave data from wave station file
-[dnWaves,Hs,dirWaves,TpAve,TpS] = loadWavesNDBC('WaveData_NDBC46011.txt');
+[dnWaves,Hs,dirWaves,TpAve,TpS] = loadWavesNDBC('D:\Data\ISDRI\Waves\SupportData\WaveData_NDBC46011.txt');
 
 % Load tide data from tide station file
-[dnTides,waterSurfaceElevation] = loadTidesNOAA('TideData_NOAA9411406.txt');
+[dnTides,waterSurfaceElevation] = loadTidesNOAA('D:\Data\ISDRI\SupportData\Tides\TideData_NOAA9411406.txt');
 waterSurfaceElevation(waterSurfaceElevation == -999) = nan;
 
 

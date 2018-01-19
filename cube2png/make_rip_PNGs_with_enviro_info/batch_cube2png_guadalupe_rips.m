@@ -19,10 +19,10 @@ baseDir = [Hub 'guadalupe\processed\']; % HUB
 saveDir = [Hub 'guadalupe\postprocessed\ripCurrentTimex_with_Instruments\']; % HUB
 
 % rewrite existing files in save directory? true=yes
-doOverwrite = false;
+doOverwrite = true;
 
 % Download new support data files?
-downloadWind = true;
+downloadWind = false;
 downloadWaves = false;
 downloadTides = false;
 
@@ -32,26 +32,27 @@ addpath(genpath(supportDataPath))
 
 if ~exist(saveDir);mkdir(saveDir);end
 dayFolder = dir([baseDir,'2017*']);
-
-% download environmental files
-% WIND: buoy number, save directory, save fname
-if downloadWind; fetchWindNDBC(46011,fullfile(supportDataPath,'Wind'),'MetData_NDBC46011.txt'); end 
-% WAVES: save directory, save fname 
-if downloadWaves; fetchWavesNDBC(46011,fullfile(supportDataPath,'Waves'),'WaveData_NDBC46011.txt');end
-% TIDES: save directory, save fname 
-endTime = '20171115'; startTime = '20171029';
-if downloadTides; fetchTidesNOAA(9411406,fullfile(supportDataPath,'Tides'),'TideData_NOAA9411406.txt',startTime,endTime);end
+% % 
+% % % download environmental files
+% % % WIND: buoy number, save directory, save fname
+% % if downloadWind; fetchWindNDBC(46011,fullfile(supportDataPath,'Wind'),'MetData_NDBC46011.txt'); end 
+% % % WAVES: save directory, save fname 
+% % if downloadWaves; fetchWavesNDBC(46011,fullfile(supportDataPath,'Waves'),'WaveData_NDBC46011.txt');end
+% % % TIDES: save directory, save fname 
+% % endTime = '20171115'; startTime = '20171029';
+% % if downloadTides; fetchTidesNOAA(9411406,fullfile(supportDataPath,'Tides'),'TideData_NOAA9411406.txt',startTime,endTime);end
 
 %% Process Files 
 imgId = 1;
-for iDay = 1:length(dayFolder)
+for iDay = 57:length(dayFolder)
         
     dayFolder(iDay).polRun = dir(fullfile(baseDir,dayFolder(iDay).name,'*_pol.mat'));
     saveDirSub = [saveDir,dayFolder(iDay).name];
     if ~exist(saveDirSub);mkdir(saveDirSub);end
     
         for iRun = 1:length(dayFolder(iDay).polRun)
-            
+            if iDay == 48 && iRun == 2
+            else
             fprintf('%3.f of %3.f in dir %3.f of %3.f: ',...
                 iRun,length(dayFolder(iDay).polRun),...
                 iDay,length(dayFolder))
@@ -79,7 +80,8 @@ for iDay = 1:length(dayFolder)
             end
             
             imgId = imgId + 1;
-          end
+            end
+        end
        
 end
       

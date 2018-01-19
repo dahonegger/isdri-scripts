@@ -16,7 +16,7 @@ baseDir = [Hub 'guadalupe\processed\']; % HUB
 
 % PNG LOCATION
 % saveDir = 'C:\Data\ISDRI\postprocessed\ripCurrentTimex_with_Instruments\'; % LENOVO HARD DRIVE
-saveDir = [Hub 'guadalupe\postprocessed\ripCurrentTimex_with_Instruments\']; % HUB
+saveDir = [Hub 'guadalupe\postprocessed\ripCurrentTimex_with_currents\']; % HUB
 
 % rewrite existing files in save directory? true=yes
 doOverwrite = true;
@@ -44,14 +44,15 @@ dayFolder = dir([baseDir,'2017*']);
 
 %% Process Files 
 imgId = 1;
-for iDay = 1:length(dayFolder)
+for iDay = 2:length(dayFolder)
         
     dayFolder(iDay).polRun = dir(fullfile(baseDir,dayFolder(iDay).name,'*_pol.mat'));
     saveDirSub = [saveDir,dayFolder(iDay).name];
     if ~exist(saveDirSub);mkdir(saveDirSub);end
     
         for iRun = 1:length(dayFolder(iDay).polRun)
-            
+            if iDay == 48 && iRun == 2
+            else
             fprintf('%3.f of %3.f in dir %3.f of %3.f: ',...
                 iRun,length(dayFolder(iDay).polRun),...
                 iDay,length(dayFolder))
@@ -63,26 +64,23 @@ for iDay = 1:length(dayFolder)
             pngBaseName = sprintf('%s_timex.png',cubeBaseName);
             pngName = fullfile(saveDirSub,pngBaseName);
             
-            load(cubeName,'timeInt')
-            
-            if size(timeInt,2) > 65
-                fileExists = exist(pngName,'file');
-                if fileExists && ~doOverwrite
-                    fprintf('%s exists. Skipping ...\n',pngName)
-                else
-                    fprintf('%s ...',cubeBaseName)
-                    %                 try
-                    cube2png_guadalupe_enviro_rips_longRuns(cubeName,pngName)
+            fileExists = exist(pngName,'file');
+            if fileExists && ~doOverwrite
+                fprintf('%s exists. Skipping ...\n',pngName)
+            else
+                fprintf('%s ...',cubeBaseName)
+%                 try
+                    cube2png_guadalupe_enviro_rips(cubeName,pngName)
                     fprintf('Done.\n')
-                    %                 catch
-                    %                     fid = fopen(['FAILED_on_file_',pngBaseName,'.txt'], 'wt' );
-                    %                     fclose(fid)
-                    %                 end
-                end
-                
+%                 catch
+%                     fid = fopen(['FAILED_on_file_',pngBaseName,'.txt'], 'wt' );
+%                     fclose(fid)
+%                 end
+                    
             end
             
             imgId = imgId + 1;
+            end
         end
        
 end
