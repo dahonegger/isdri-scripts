@@ -3,7 +3,7 @@
 % This code plots the alongshore transect matrices and the associated radar
 % imagery
 
-%close all; clear all;
+close all; clear all;
 
 %% User inputs
 % add paths to ISDRI HUB Support Data and GitHub Repository
@@ -90,36 +90,36 @@ for iP = 1:length(startTime);
     transectMatrixFiltered150 = zeros(size(transectMatrix150));
     transectMatrixFiltered200 = zeros(size(transectMatrix200));
     for t = 1:length(times)
-%         filtered100_100(t,:) = movmean(transectMatrix100(t,:),100);
-%         filtered100_300(t,:) = movmean(transectMatrix100(t,:),300);
-%         filtered100_600(t,:) = movmean(transectMatrix100(t,:),600);
-        filtered100_1500(t,:) = movmean(transectMatrix100(t,:),1500);
-%         transectMatrixFiltered75(t,:) = smooth1d_loess(transectMatrix75(t,:),yC,800,yC);
-%         transectMatrixFiltered100(t,:) = smooth1d_loess(transectMatrix100(t,:),yC,800,yC);
-%         transectMatrixFiltered100_400(t,:) = smooth1d_loess(transectMatrix100(t,:),yC,400,yC);
-%         transectMatrixFiltered150(t,:) = smooth1d_loess(transectMatrix150(t,:),yC,800,yC);
-%         transectMatrixFiltered200(t,:) = smooth1d_loess(transectMatrix200(t,:),yC,800,yC);
+%         transectMatrixFiltered75(t,:) = smooth1d_loess(transectMatrix75(t,:),yC,1200,yC);
+        transectMatrixFiltered100(t,:) = smooth1d_loess(transectMatrix100(t,:),yC,1200,yC);
+        transectMatrixFiltered150(t,:) = smooth1d_loess(transectMatrix150(t,:),yC,1200,yC);
+        transectMatrixFiltered200(t,:) = smooth1d_loess(transectMatrix200(t,:),yC,1200,yC);
+        
+% %         transectMatrixFiltered75(t,:) = smooth1d_loess(transectMatrix75(t,:),yC,1200,yC);
+%         transectMatrixFiltered100(t,:) = smooth1d_loess(transectMatrix100(t,:),yC,400,yC);
+%         transectMatrixFiltered150(t,:) = smooth1d_loess(transectMatrix150(t,:),yC,400,yC);
+%         transectMatrixFiltered200(t,:) = smooth1d_loess(transectMatrix200(t,:),yC,400,yC);
     end
-%     
-%     % subtract off smoothed transect to find anomaly
+    
+    % subtract off smoothed transect to find anomaly
 %     TMat75 = transectMatrix75 - transectMatrixFiltered75;
-    TMat1002 = transectMatrix100 - transectMatrixFiltered100_400;
-%     TMat150 = transectMatrix150 - transectMatrixFiltered150;
-%     TMat200 = transectMatrix200 - transectMatrixFiltered200;
-%     load('C:\Data\ISDRI\isdri-scripts\ripProcessing\transects\cMap.mat')
+    TMat100 = transectMatrix100 - transectMatrixFiltered100;
+    TMat150 = transectMatrix150 - transectMatrixFiltered150;
+    TMat200 = transectMatrix200 - transectMatrixFiltered200;
+    load('C:\Data\ISDRI\isdri-scripts\ripProcessing\transects\cMap.mat')
     saveDir = 'E:\guadalupe\postprocessed\alongshoreTransectMatrix\ANOMALY_TRANSECTS\';
-%     matName100 = [saveDir startTime{iP}(1:8) '_' endTime{iP}(1:8) '_TMat100.mat'];
-%     matName150 = [saveDir startTime{iP}(1:8) '_' endTime{iP}(1:8) '_TMat150.mat'];
-%     matName200 = [saveDir startTime{iP}(1:8) '_' endTime{iP}(1:8) '_TMat200.mat'];
-    timeMatName = [saveDir startTime{iP}(1:8) '_' endTime{iP}(1:8) '_time.mat'];
-%     
-%     save(matName100,'TMat100')
-%     save(matName150,'TMat150')
-%     save(matName200,'TMat200')
-    save(timeMatName,'times')
+    matName100 = [saveDir startTime{iP}(1:8) '_' endTime{iP}(1:8) '_TMat100.mat'];
+    matName150 = [saveDir startTime{iP}(1:8) '_' endTime{iP}(1:8) '_TMat150.mat'];
+    matName200 = [saveDir startTime{iP}(1:8) '_' endTime{iP}(1:8) '_TMat200.mat'];
+    timeMatName = [saveDir startTime{iP}(1:8) '_' endTime{iP}(1:8) '_time.mat'];    
+
+    save(matName100,'TMat100')
+    save(matName150,'TMat150')
+    save(matName200,'TMat200')
+%     save(timeMatName,'times')
 
     clear timeMatName
-%     clear matName100 matName150 matName200
+    clear matName100 matName150 matName200
     
 %     %% loop through mat files
 %     for iDay = 1:length(days) %loop through days

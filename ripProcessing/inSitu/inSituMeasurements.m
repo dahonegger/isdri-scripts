@@ -99,12 +99,14 @@ dvUTC = dvPDT;
 dvUTC(:,4) = dvPDT(:,4)+7;  % add 7 hours to convert from PDT to UTC   
 dnUTC = datenum(dvUTC);
 dvUTC = datevec(dnUTC);
+clear tA
 
 dvPDT_AQ = datevec(t);    % tA tB tC and tE are the same
 dvUTC_AQ = dvPDT_AQ; 
 dvUTC_AQ(:,4) = dvPDT_AQ(:,4)+7;  % add 7 hours to convert from PDT to UTC   
 dnUTC_AQ = datenum(dvUTC_AQ);
 dvUTC_AQ = datevec(dnUTC_AQ);
+clear t
 
 %% Rotate velocities into local coordinate system
 rot = -13;

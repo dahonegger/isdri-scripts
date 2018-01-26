@@ -16,7 +16,7 @@ baseDir = [Hub 'guadalupe\processed\']; % HUB
 
 % PNG LOCATION
 % saveDir = 'C:\Data\ISDRI\postprocessed\ripCurrentTimex_with_Instruments\'; % LENOVO HARD DRIVE
-saveDir = [Hub 'guadalupe\postprocessed\ripCurrentTimex_with_Instruments\']; % HUB
+saveDir = [Hub 'guadalupe\postprocessed\ripCurrentTimex_with_currents\']; % HUB
 
 % rewrite existing files in save directory? true=yes
 doOverwrite = true;
@@ -32,25 +32,38 @@ addpath(genpath(supportDataPath))
 
 if ~exist(saveDir);mkdir(saveDir);end
 dayFolder = dir([baseDir,'2017*']);
-% % 
-% % % download environmental files
-% % % WIND: buoy number, save directory, save fname
-% % if downloadWind; fetchWindNDBC(46011,fullfile(supportDataPath,'Wind'),'MetData_NDBC46011.txt'); end 
-% % % WAVES: save directory, save fname 
-% % if downloadWaves; fetchWavesNDBC(46011,fullfile(supportDataPath,'Waves'),'WaveData_NDBC46011.txt');end
-% % % TIDES: save directory, save fname 
-% % endTime = '20171115'; startTime = '20171029';
-% % if downloadTides; fetchTidesNOAA(9411406,fullfile(supportDataPath,'Tides'),'TideData_NOAA9411406.txt',startTime,endTime);end
+
+% Load wind data from wind station file
+[dnWind,magWind,dirWind] = loadWindNDBC('MetData_NDBC46011.txt');
+
+% Load wave data from wave station file
+[dnWaves,Hs,dirWaves,~,~] = loadWavesNDBC_historical('WaveData_NDBC46011.txt');
+
+% Load tide data from tide station file
+[dnTides,waterSurfaceElevation] = loadTidesNOAA('TideData_NOAA9411406.txt');
+waterSurfaceElevation(waterSurfaceElevation == -999) = nan;
+
+% Load current vectors
+[dnUTC_AQ,U,V,W] = loadADCP('D:\Data\ISDRI\SupportData\MacMahan\STR3_AQ.mat',4,-13);
+
+for i = 1:size(U,1)
+    idx(i) = find(~isnan(U(i,:)),1,'last');
+    UUS(i,:) = U(i,(idx(i)-2):idx(i));
+    VVS(i,:) = V(i,(idx(i)-2):idx(i));
+end
+
+U_surface = mean(UUS,2);
+V_surface = mean(VVS,2);
 
 %% Process Files 
 imgId = 1;
-for iDay = 1:length(dayFolder)
+for iDay = 45:46%length(dayFolder)
         
     dayFolder(iDay).polRun = dir(fullfile(baseDir,dayFolder(iDay).name,'*_pol.mat'));
     saveDirSub = [saveDir,dayFolder(iDay).name];
     if ~exist(saveDirSub);mkdir(saveDirSub);end
     
-        for iRun = 1:length(dayFolder(iDay).polRun)
+        for iRun = 29:length(dayFolder(iDay).polRun)
             if iDay == 48 && iRun == 2
             else
             fprintf('%3.f of %3.f in dir %3.f of %3.f: ',...
@@ -70,7 +83,11 @@ for iDay = 1:length(dayFolder)
             else
                 fprintf('%s ...',cubeBaseName)
 %                 try
-                    cube2png_guadalupe_enviro_rips(cubeName,pngName)
+                    cube2png_guadalupe_currentVecs(cubeName,pngName,...
+                        dnWind,magWind,dirWind,...
+                        dnWaves,Hs,...
+                        dnTides,waterSurfaceElevation,...
+                        dnUTC_AQ,U_surface,V_surface)
                     fprintf('Done.\n')
 %                 catch
 %                     fid = fopen(['FAILED_on_file_',pngBaseName,'.txt'], 'wt' );

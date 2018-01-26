@@ -2,55 +2,60 @@
 % 9/17/2017
 clear variables; home
 
+%% Add path
 addpath(genpath('C:\Data\ISDRI\isdri-scripts'));
+addpath(genpath('C:\Data\ISDRI\cBathy'));
 
 %% define time of interest
-startTime = '20171017_1615';
-endTime = '20171018_0230';
+startTime = '20171018_0515';
+endTime = '20171018_1630';
 
-saveFolder = ['C:\Data\ISDRI\postprocessed\ripVideos3\' startTime '-' endTime];
+Hub = 'E'; 
+baseDir = [Hub ':\guadalupe\processed\'];
+saveFolder = ['E:\guadalupe\postprocessed\ripVideos\' startTime '-' endTime];
 mkdir(saveFolder)
 
 %% define figure parameters
-colorAxisLimits = [30 220];
+colorAxisLimits = [40 220];
 % XYLimits = [-1300 -500; -300 2900];
-XYLimits = [-1300 -500; -700 1200];
+XYLimits = [-1500 -500; -1000 1000];
 
 %% make list of cubes
-Hub = 'E'; 
-dataFolder = [Hub ':\guadalupe\processed\' startTime(1:4) '-' startTime(5:6)...
+dataFolder = [baseDir startTime(1:4) '-' startTime(5:6)...
     '-' startTime(7:8)];
-cd(dataFolder)
-cubeListAll = dirname('*_pol.mat');
-if ~isequal(startTime(5:8),endTime(5:8))
-    days = str2num(startTime(7:8)):str2num(endTime(7:8));
-    for d = 2:length(days)
-        dataFolder1 = [Hub ':\guadalupe\processed\' startTime(1:4) '-' startTime(5:6)...
-            '-' sprintf('%02i',days(2))];
-        cd(dataFolder1)
-        cL = dirname('*_pol.mat');
-        cubeListAll = [cubeListAll cL];
-        clear dataFolder1 pL
-    end
+% create list of file names
+dvdays = datevec(datenum([str2num(startTime(1:4)),str2num(startTime(5:6)),...
+    str2num(startTime(7:8)),0,0,0]):datenum([str2num(endTime(1:4)),...
+    str2num(endTime(5:6)),str2num(endTime(7:8)),0,0,0]));
+days = datevec2doy(dvdays);
+dv = datevec(doy2date(days,2017*ones(size(days))));
+dv(1,4) = str2num(startTime(10:11));
+dv(end,4) = str2num(endTime(10:11));
+
+cubeListAll = [];
+for d = 1:length(days)
+    dataFolder = [baseDir num2str(dv(d,1)) '-' num2str(dv(d,2),'%02i') '-'...
+        num2str(dv(d,3),'%02i') '\'];
+    cubeList1 = dir(fullfile(dataFolder,'*_pol.mat'));
+    cubeListAll = [cubeListAll; cubeList1];
+    clear cubeList1
 end
 
-if str2num(startTime(5:6)) == 9
-    firstDay = num2str(243 + str2num(startTime(7:8)));
-    lastDay = num2str(243 + str2num(endTime(7:8)));
-    firstFile = ['Guadalupe_2017' firstDay startTime(10:11)...
-        startTime(12:13) '_pol.mat'];
-    lastFile = ['Guadalupe_2017' lastDay endTime(10:11)...
-        endTime(12:13) '00_pol.mat'];
-else
-    firstDay = num2str(273 + str2num(startTime(7:8)));
-    lastDay = num2str(273 + str2num(endTime(7:8)));
-    firstFile = ['Guadalupe_2017' firstDay startTime(10:11)...
-        startTime(12:13) '_pol.mat'];
-    lastFile = ['Guadalupe_2017' lastDay endTime(10:11)...
-        endTime(12:13) '_pol.mat'];
+for i = 1:length(cubeListAll);
+    dd = datevec(doy2date(str2num(cubeListAll(i).name(15:17)),2017));
+    dnList(i) = datenum([dd(1), dd(2), dd(3),...
+        str2num(cubeListAll(i).name(18:19)),...
+        str2num(cubeListAll(i).name(20:21)),0]);
 end
-firstFileIndex = find(strcmp(firstFile,cubeListAll)==1);
-lastFileIndex = find(strcmp(lastFile,cubeListAll)==1);
+
+startdn = datenum([str2num(startTime(1:4)),str2num(startTime(5:6)),...
+    str2num(startTime(7:8)),str2num(startTime(10:11)),str2num(startTime(12:13)),0]);
+enddn = datenum([str2num(endTime(1:4)),str2num(endTime(5:6)),...
+    str2num(endTime(7:8)),str2num(endTime(10:11)),str2num(endTime(12:13)),0]);
+
+[~,firstFileIndex] = min(abs(startdn - dnList));
+[~,lastFileIndex] = min(abs(enddn - dnList));
+
 cubeList = cubeListAll(firstFileIndex:lastFileIndex);
 
 %% Load data from 512 rotation runs
@@ -59,21 +64,23 @@ rotation = 13; % domain rotation
 imgNum = 1;
 for i = 1:length(cubeList)
     % Load radar data
-    cube = cubeList{i}; dayNum = str2num(cube(15:17));
-    if dayNum < 273
-        day = dayNum - 243;
-        mth = 9;
-    else
-        day = dayNum - 273;
-        mth = 10;
-    end
-    folder = [Hub ':\guadalupe\processed\' startTime(1:4) '-' num2str(mth,'%02i')...
-        '-' num2str(day,'%02i')];
-    cd(folder)
+%     cube = cubeList(i).name; dayNum = str2num(cube(15:17));
+
+%     if dayNum < 273
+%         day = dayNum - 243;
+%         mth = 9;
+%     else
+%         day = dayNum - 273;
+%         mth = 10;
+%     end
+%     folder = [Hub ':\guadalupe\processed\' startTime(1:4) '-' num2str(mth,'%02i')...
+%         '-' num2str(day,'%02i')];
+%     cd(folder)
     
-    load(cubeList{i},'timeInt')
+    cubeName = [cubeList(i).folder '\' cubeList(i).name];
+    load(cubeName,'timeInt')
     if size(timeInt,2) > 130
-        load(cubeList{i},'Azi','Rg','results','data','timeInt')
+        load(cubeName,'Azi','Rg','results','data','timeInt')
         
         % define time vector
         timeVec = mean(timeInt);
@@ -186,7 +193,7 @@ for i = 1:length(cubeList)
                 num2str(timeCube1(s,4),'%02i') ':', num2str(timeCube1(s,5),'%02i')...
                 ':' num2str(round(timeCube1(s,6)),'%02i') ' UTC'];
             title(ttl)
-            xlabel('X [m]'); ylabel('Y [m]')
+            xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
             ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
             imgNum=imgNum+1;
             print(fig,ttlFig,'-dpng')
@@ -210,7 +217,7 @@ for i = 1:length(cubeList)
                 num2str(timeCube2(s,4),'%02i') ':', num2str(timeCube2(s,5),'%02i')...
                 ':' num2str(round(timeCube2(s,6)),'%02i') ' UTC'];
             title(ttl)
-            xlabel('X [m]'); ylabel('Y [m]')
+            xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
             ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
             imgNum=imgNum+1;
             print(fig,ttlFig,'-dpng')
@@ -234,7 +241,7 @@ for i = 1:length(cubeList)
                 num2str(timeCube3(s,4),'%02i') ':', num2str(timeCube3(s,5),'%02i')...
                 ':' num2str(round(timeCube3(s,6)),'%02i') ' UTC'];
             title(ttl)
-            xlabel('X [m]'); ylabel('Y [m]')
+            xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
             ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
             imgNum=imgNum+1;
             print(fig,ttlFig,'-dpng')
@@ -242,7 +249,7 @@ for i = 1:length(cubeList)
             clear ttl ttlFig
         end
     elseif size(timeInt,2) > 65 && size(timeInt,2) < 130
-        load(cubeList{i},'Azi','Rg','results','timex','timeInt')
+        load(cubeName,'Azi','Rg','results','timex','timeInt')
         
         % define time vector
         timeVec = mean(mean(timeInt));
@@ -315,7 +322,7 @@ for i = 1:length(cubeList)
                 num2str(t_dv(4),'%02i') ':', num2str(t_dv(5),'%02i')...
                 ':' num2str(round(t_dv(6)),'%02i') ' UTC'];
             title(ttl)
-            xlabel('X [m]'); ylabel('Y [m]')
+            xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
             ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
             imgNum=imgNum+1;
             print(fig,ttlFig,'-dpng')
@@ -323,7 +330,7 @@ for i = 1:length(cubeList)
             clear ttl ttlFig
         end
     elseif size(timeInt,2) == 64
-        load(cubeList{i},'Azi','Rg','results','timex','timeInt')
+        load(cubeName,'Azi','Rg','results','timex','timeInt')
         
         % define time vector
         timeVec = mean(mean(timeInt));
@@ -396,7 +403,7 @@ for i = 1:length(cubeList)
                 num2str(t_dv(4),'%02i') ':', num2str(t_dv(5),'%02i')...
                 ':' num2str(round(t_dv(6)),'%02i') ' UTC'];
             title(ttl)
-            xlabel('X [m]'); ylabel('Y [m]')
+            xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
             ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
             imgNum=imgNum+1;
             print(fig,ttlFig,'-dpng')

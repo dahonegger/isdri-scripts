@@ -49,6 +49,21 @@ zBedE = E.TCHAIN.ZBEDT;
 zBedE(1) = zBedE(2) + (zBedE(2)-zBedE(3));
 clear A B C E AQ
 
+%% Redefine time vectors in UTC
+dvPDT = datevec(tA);    % tA tB tC and tE are the same
+dvUTC = dvPDT;
+dvUTC(:,4) = dvPDT(:,4)+7;  % add 7 hours to convert from PDT to UTC   
+dnUTC = datenum(dvUTC);
+dvUTC = datevec(dnUTC);
+clear tA
+
+dvPDT_AQ = datevec(t);    % tA tB tC and tE are the same
+dvUTC_AQ = dvPDT_AQ; 
+dvUTC_AQ(:,4) = dvPDT_AQ(:,4)+7;  % add 7 hours to convert from PDT to UTC   
+dnUTC_AQ = datenum(dvUTC_AQ);
+dvUTC_AQ = datevec(dnUTC_AQ);
+clear t
+
 %% create time series
 load('C:\Data\ISDRI\postprocessed\rips\DataAvailability_Rips_dv.mat')
 guadalupeRips = dv;
@@ -57,21 +72,8 @@ clear dv
 ripVecGuadalupe = NaN(1,length(dn));
 ripVecGuadalupe(guadalupeRips(:,5)==2) = 1;
 
-tides_dnrips_Guadalupe = interp1(t,depth,dn);
+tides_dnrips_Guadalupe = interp1(dnUTC_AQ,depth,dn);
 tides_dnrips_Guadalupe(ripVecGuadalupe ~= 1) = nan;
-
-%% Redefine time vectors in UTC
-dvPDT = datevec(tA);    % tA tB tC and tE are the same
-dvUTC = dvPDT;
-dvUTC(:,4) = dvPDT(:,4)+7;  % add 7 hours to convert from PDT to UTC   
-dnUTC = datenum(dvUTC);
-dvUTC = datevec(dnUTC);
-
-dvPDT_AQ = datevec(t);    % tA tB tC and tE are the same
-dvUTC_AQ = dvPDT_AQ; 
-dvUTC_AQ(:,4) = dvPDT_AQ(:,4)+7;  % add 7 hours to convert from PDT to UTC   
-dnUTC_AQ = datenum(dvUTC_AQ);
-dvUTC_AQ = datevec(dnUTC_AQ);
 
 %% Rotate velocities into local coordinate system
 rot = -13;
@@ -120,15 +122,16 @@ UU2 = mean(UUS,2);
 
 figure,
 ax1 = subplot(2,1,1);
-plot(t,depth)
+plot(dnUTC_AQ,depth)
 hold on
+plot(dnTides,WL)
 plot(dn,tides_dnrips_Guadalupe,'r','LineWidth',2)
 datetick('x')
 
 ax2 = subplot(2,1,2);
-plot(t,UU1,'r')
+plot(dnUTC_AQ,UU1,'r')
 hold on
-plot(t,UU2,'b')
+plot(dnUTC_AQ,UU2,'b')
 datetick('x')
 
 linkaxes([ax1,ax2],'x')

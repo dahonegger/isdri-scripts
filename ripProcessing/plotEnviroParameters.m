@@ -9,7 +9,7 @@ supportDataPath = 'D:\Data\ISDRI\SupportData'; % LENOVO HARD DRIVE
 addpath(genpath('C:\Data\ISDRI\isdri-scripts')) %GITHUB REPOSITORY
 
 %% create time series
-dn = datenum([2017,09,01,0,0,0]):1/24/2:datenum([2017,10,5,21,0,0]);
+dn = datenum([2017,08,31,21,0,0]):1/24:datenum([2017,10,26,15,0,0]);
 dv = datevec(dn);
 
 load('C:\Data\ISDRI\postprocessed\rips\dv_rips_purisma.mat')
