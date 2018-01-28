@@ -1,4 +1,4 @@
-% ripDomainMovingAve.m
+% ripDomainMovingAve_inSitu.m
 % 9/17/2017
 clear variables; home
 
@@ -19,6 +19,52 @@ mkdir(saveFolder)
 colorAxisLimits = [20 220];
 % XYLimits = [-1300 -500; -300 2900];
 XYLimits = [-1500 -500; -1000 1000];
+
+%% load variables
+rot = -13;
+bave = 3;
+[dnUTC_AQ,Ubave,Vbave,Wbave,ZBed,depth] = loadADCP('D:\Data\ISDRI\SupportData\MacMahan\STR3_AQ.mat', bave, rot);
+
+A = load('D:\Data\ISDRI\SupportData\MacMahan\ptsal_tchain_STR3_A');  % Most offshore
+B = load('D:\Data\ISDRI\SupportData\MacMahan\ptsal_tchain_STR3_B');  % Middle, with ADCP
+C = load('D:\Data\ISDRI\SupportData\MacMahan\ptsal_tchain_STR3_C');  % Most onshore
+E = load('D:\Data\ISDRI\SupportData\MacMahan\ptsal_tchain_STR3_E');  % to south
+load('C:\Data\ISDRI\isdri-scripts\ripProcessing\transects\cMap.mat')
+[dnTides,WL] = loadTidesNOAA('D:\Data\ISDRI\SupportData\Tides\TideData_NOAA9411406.txt');
+
+%% Redefine variables
+
+tA = A.TCHAIN.time_dnum;
+tempA = A.TCHAIN.TEMP';
+zBedA = A.TCHAIN.ZBEDT;
+zBedA(1) = zBedA(2) + (zBedA(2)-zBedA(3));
+
+tB = B.TCHAIN.time_dnum;
+tempB = B.TCHAIN.TEMP';
+zBedB = B.TCHAIN.ZBEDT;
+zBedB_All = repmat(zBedB,[length(tB),1]);
+
+tC = C.TCHAIN.time_dnum;
+tempC = C.TCHAIN.TEMP';
+zBedC = C.TCHAIN.ZBEDT;
+zBedC(1) = zBedC(2) + (zBedC(2)-zBedC(3));
+
+tE = E.TCHAIN.time_dnum;
+tempE = E.TCHAIN.TEMP';
+zBedE = E.TCHAIN.ZBEDT;
+zBedE(1) = zBedE(2) + (zBedE(2)-zBedE(3));
+clear A B C E AQ
+
+%% Redefine time vectors in UTC
+dvPDT = datevec(tA);    % tA tB tC and tE are the same
+dvUTC = dvPDT;
+dvUTC(:,4) = dvPDT(:,4)+7;  % add 7 hours to convert from PDT to UTC
+dnUTC = datenum(dvUTC);
+dvUTC = datevec(dnUTC);
+clear tA
+
+depth_tchain = interp1(dnUTC_AQ,depth,dnUTC);
+zBedB_All(:,1) = depth_tchain;
 
 %% make list of cubes
 dataFolder = [baseDir startTime(1:4) '-' startTime(5:6)...
@@ -53,6 +99,12 @@ startdn = datenum([str2num(startTime(1:4)),str2num(startTime(5:6)),...
 enddn = datenum([str2num(endTime(1:4)),str2num(endTime(5:6)),...
     str2num(endTime(7:8)),str2num(endTime(10:11)),str2num(endTime(12:13)),0]);
 
+idxAQ = find(dnUTC_AQ > startdn & dnUTC_AQ < enddn);
+idxTChain = find(dnUTC > startdn & dnUTC < enddn);
+
+tempLimits(1) = min(min(tempB(:,idxTChain)));
+tempLimits(2) = max(max(tempB(:,idxTChain)));
+
 [~,firstFileIndex] = min(abs(startdn - dnList));
 [~,lastFileIndex] = min(abs(enddn - dnList));
 
@@ -64,18 +116,6 @@ rotation = 13; % domain rotation
 imgNum = 1;
 for i = 1:length(cubeList)
     % Load radar data
-%     cube = cubeList(i).name; dayNum = str2num(cube(15:17));
-
-%     if dayNum < 273
-%         day = dayNum - 243;
-%         mth = 9;
-%     else
-%         day = dayNum - 273;
-%         mth = 10;
-%     end
-%     folder = [Hub ':\guadalupe\processed\' startTime(1:4) '-' num2str(mth,'%02i')...
-%         '-' num2str(day,'%02i')];
-%     cd(folder)
     
     cubeName = [cubeList(i).folder '\' cubeList(i).name];
     load(cubeName,'timeInt')
@@ -86,10 +126,6 @@ for i = 1:length(cubeList)
         timeVec = mean(timeInt);
         t_dn = epoch2Matlab(timeVec);
         t_dv = datevec(t_dn);
-%         t_dn = datenum([str2num(cube(11:14)),mth,...
-%             day,str2num(cube(18:19)),0,0])...
-%             + ((timeInt(1,:) - timeInt(1,1)))/60/60/24;
-%         t_dv = datevec(t_dn);
         
         % set rotation(so shoreline is parallel to edge of plot)
         heading = results.heading-rotation;
@@ -174,20 +210,22 @@ for i = 1:length(cubeList)
         aziOcC = aziOc - rotation;
         thOcC = pi/180*(90 - aziOcC - results.heading);
         [xOcC,yOcC] = pol2cart(thOcC,rgOc);
-        
+                
         % make .pngs
         for s = 1:rate:c3
             fig = figure('visible','off');
             fig.PaperUnits = 'inches';
-            fig.PaperPosition = [0 0 4 6];
+            fig.PaperPosition = [0 0 12 6];
+
+            sub1 = subplot(2,3, [1 4]);
             pcolor(XX,YY,movingAve1(:,:,s))
             shading interp; axis image
             hold on
             plot(xJMC(1:3),yJMC(1:3),'b.','MarkerSize',20)
             plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
 %             plot(xOcC,yOcC,'g.','MarkerSize',20)
-            colormap(hot)
-            colorbar
+            colormap(sub1,hot)
+%             colorbar
             caxis([colorAxisLimits(1) colorAxisLimits(2)])
             axis([XYLimits(1,1) XYLimits(1,2) XYLimits(2,1) XYLimits(2,2)])
             ttl = [num2str(timeCube1(s,1)) num2str(timeCube1(s,2),'%02i') num2str(timeCube1(s,3),'%02i') ' - ',...
@@ -196,6 +234,41 @@ for i = 1:length(cubeList)
             title(ttl)
             xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
             ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
+            
+            time = datenum(timeCube1(s,:));
+            sub2 = subplot(2,3,[2 3]);
+            pcolor(dnUTC_AQ(idxAQ),ZBed,Ubave(idxAQ,:)')
+            shading flat; colorbar; colormap(sub2, cMap)
+            caxis([-0.4 0.4])
+            axis([dnUTC_AQ(idxAQ(1)) dnUTC_AQ(idxAQ(end)) 1 11])
+            datetick('x','keeplimits')
+            y1 = get(gca,'ylim');
+            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
+            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 11])
+            xlabel('Time'); ylabel('Distance above bed (m)');
+            ttlU = ['U velocity at STRING B'];
+            title(ttlU)
+            
+            timeMat = repmat(dnUTC(idxTChain),[1,length(zBedB)]);
+            sub3 = subplot(2,3,[5 6]);
+            pcolor(timeMat',zBedB_All(idxTChain,:)',tempB(:,idxTChain))
+            shading flat; hcb =colorbar;
+            colormap(sub3, parula);
+            hold on
+%             pcolor(dnUTC(idxTChain),depth_tchain,tempB(1,idxTChain))
+            % plot(dnUTC_AQ(idxAQ),(depth(idxAQ)-mean(depth(idxAQ))+4),'r')
+            % plot(dnTides(idxTides),(WL(idxTides)-mean(WL(idxTides))+4),'y')
+            caxis(tempLimits)
+            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 max(depth)])
+            datetick('x','keeplimits')
+            y1 = get(gca,'ylim');
+            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
+            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 9])
+            xlabel('Time'); ylabel('Distance above bed (m)');
+            ttlC = ['Temperature at STRING B'];
+            title(ttlC)
+            xlabel(hcb,'Temperature C')
+            
             imgNum=imgNum+1;
             print(fig,ttlFig,'-dpng')
             close all
@@ -204,15 +277,17 @@ for i = 1:length(cubeList)
         for s = (buffer+2):rate:(size(cube2,3) - buffer - 2);
             fig = figure('visible','off');
             fig.PaperUnits = 'inches';
-            fig.PaperPosition = [0 0 4 6];
+            fig.PaperPosition = [0 0 12 6];
+
+            sub1 = subplot(2,3, [1 4]);
             pcolor(XX,YY,movingAve2(:,:,s))
             shading interp; axis image
             hold on
             plot(xJMC(1:3),yJMC(1:3),'b.','MarkerSize',20)
             plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
 %             plot(xOcC,yOcC,'g.','MarkerSize',20)
-            colormap(hot)
-            colorbar
+            colormap(sub1,hot)
+%             colorbar
             caxis([colorAxisLimits(1) colorAxisLimits(2)])
             axis([XYLimits(1,1) XYLimits(1,2) XYLimits(2,1) XYLimits(2,2)])
             ttl = [num2str(timeCube2(s,1)) num2str(timeCube2(s,2),'%02i') num2str(timeCube2(s,3),'%02i') ' - ',...
@@ -221,23 +296,59 @@ for i = 1:length(cubeList)
             title(ttl)
             xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
             ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
+            
+            time = datenum(timeCube2(s,:));
+            sub2 = subplot(2,3,[2 3]);
+            pcolor(dnUTC_AQ(idxAQ),ZBed,Ubave(idxAQ,:)')
+            shading flat; colorbar; colormap(sub2, cMap)
+            caxis([-0.4 0.4])
+            axis([dnUTC_AQ(idxAQ(1)) dnUTC_AQ(idxAQ(end)) 1 11])
+            datetick('x','keeplimits')
+            y1 = get(gca,'ylim');
+            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
+            xlabel('Time'); ylabel('Distance above bed (m)');
+            ttlU = ['U velocity at STRING B'];
+            title(ttlU)
+            
+            timeMat = repmat(dnUTC(idxTChain),[1,length(zBedB)]);
+            sub3 = subplot(2,3,[5 6]);
+            pcolor(timeMat',zBedB_All(idxTChain,:)',tempB(:,idxTChain))
+            shading flat; hcb =colorbar;
+            colormap(sub3, parula);
+            hold on
+%             pcolor(dnUTC(idxTChain),depth_tchain,tempB(1,idxTChain))
+            % plot(dnUTC_AQ(idxAQ),(depth(idxAQ)-mean(depth(idxAQ))+4),'r')
+            % plot(dnTides(idxTides),(WL(idxTides)-mean(WL(idxTides))+4),'y')
+            caxis(tempLimits)
+            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 max(depth)])
+            datetick('x','keeplimits')
+            y1 = get(gca,'ylim');
+            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
+            xlabel('Time'); ylabel('Distance above bed (m)');
+            ttlC = ['Temperature at STRING B'];
+            title(ttlC)
+            xlabel(hcb,'Temperature C')
+            
+            ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
             imgNum=imgNum+1;
             print(fig,ttlFig,'-dpng')
             close all
             clear ttl ttlFig
         end
         for s = buffer:rate:size(movingAve3,3)
-            fig = figure('visible','off');
+                      fig = figure('visible','off');
             fig.PaperUnits = 'inches';
-            fig.PaperPosition = [0 0 4 6];
+            fig.PaperPosition = [0 0 12 6];
+
+            sub1 = subplot(2,3, [1 4]);
             pcolor(XX,YY,movingAve3(:,:,s))
             shading interp; axis image
-            hold on            
+            hold on
             plot(xJMC(1:3),yJMC(1:3),'b.','MarkerSize',20)
             plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
 %             plot(xOcC,yOcC,'g.','MarkerSize',20)
-            colormap(hot)
-            colorbar
+            colormap(sub1,hot)
+%             colorbar
             caxis([colorAxisLimits(1) colorAxisLimits(2)])
             axis([XYLimits(1,1) XYLimits(1,2) XYLimits(2,1) XYLimits(2,2)])
             ttl = [num2str(timeCube3(s,1)) num2str(timeCube3(s,2),'%02i') num2str(timeCube3(s,3),'%02i') ' - ',...
@@ -245,6 +356,42 @@ for i = 1:length(cubeList)
                 ':' num2str(round(timeCube3(s,6)),'%02i') ' UTC'];
             title(ttl)
             xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
+            ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
+            
+            time = datenum(timeCube3(s,:));
+            sub2 = subplot(2,3,[2 3]);
+            pcolor(dnUTC_AQ(idxAQ),ZBed,Ubave(idxAQ,:)')
+            shading flat; colorbar; colormap(sub2, cMap)
+            caxis([-0.4 0.4])
+            axis([dnUTC_AQ(idxAQ(1)) dnUTC_AQ(idxAQ(end)) 1 11])
+            datetick('x','keeplimits')
+            y1 = get(gca,'ylim');
+            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
+            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 11])
+            xlabel('Time'); ylabel('Distance above bed (m)');
+            ttlU = ['U velocity at STRING B'];
+            title(ttlU)
+            
+            timeMat = repmat(dnUTC(idxTChain),[1,length(zBedB)]);
+            sub3 = subplot(2,3,[5 6]);
+            pcolor(timeMat',zBedB_All(idxTChain,:)',tempB(:,idxTChain))
+            shading flat; hcb =colorbar;
+            colormap(sub3, parula);
+            hold on
+%             pcolor(dnUTC(idxTChain),depth_tchain,tempB(1,idxTChain))
+            % plot(dnUTC_AQ(idxAQ),(depth(idxAQ)-mean(depth(idxAQ))+4),'r')
+            % plot(dnTides(idxTides),(WL(idxTides)-mean(WL(idxTides))+4),'y')
+            caxis(tempLimits)
+            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 max(depth)])
+            datetick('x','keeplimits')
+            y1 = get(gca,'ylim');
+            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
+            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 9])
+            xlabel('Time'); ylabel('Distance above bed (m)');
+            ttlC = ['Temperature at STRING B'];
+            title(ttlC)
+            xlabel(hcb,'Temperature C')
+            
             ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
             imgNum=imgNum+1;
             print(fig,ttlFig,'-dpng')
@@ -309,24 +456,62 @@ for i = 1:length(cubeList)
         [xOcC,yOcC] = pol2cart(thOcC,rgOc);
         
         for rr = 1:round((size(timeInt,2)/10))
-            fig = figure('visible','off');
+                        fig = figure('visible','off');
             fig.PaperUnits = 'inches';
-            fig.PaperPosition = [0 0 4 6];
-            pcolor(XX,YY,tC')
+            fig.PaperPosition = [0 0 12 6];
+
+            sub1 = subplot(2,3, [1 4]);
+            pcolor(XX,YY,movingAve1(:,:,s))
             shading interp; axis image
-            colormap(hot)
-            colorbar
             hold on
             plot(xJMC(1:3),yJMC(1:3),'b.','MarkerSize',20)
             plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
 %             plot(xOcC,yOcC,'g.','MarkerSize',20)
+            colormap(sub1,hot)
+%             colorbar
             caxis([colorAxisLimits(1) colorAxisLimits(2)])
             axis([XYLimits(1,1) XYLimits(1,2) XYLimits(2,1) XYLimits(2,2)])
-            ttl = [num2str(t_dv(1)) num2str(t_dv(2),'%02i') num2str(t_dv(3),'%02i') ' - ',...
-                num2str(t_dv(4),'%02i') ':', num2str(t_dv(5),'%02i')...
-                ':' num2str(round(t_dv(6)),'%02i') ' UTC'];
+            ttl = [num2str(timeCube1(s,1)) num2str(timeCube1(s,2),'%02i') num2str(timeCube1(s,3),'%02i') ' - ',...
+                num2str(timeCube1(s,4),'%02i') ':', num2str(timeCube1(s,5),'%02i')...
+                ':' num2str(round(timeCube1(s,6)),'%02i') ' UTC'];
             title(ttl)
             xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
+            ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
+            
+            time = datenum(timeCube1(s,:));
+            sub2 = subplot(2,3,[2 3]);
+            pcolor(dnUTC_AQ(idxAQ),ZBed,Ubave(idxAQ,:)')
+            shading flat; colorbar; colormap(sub2, cMap)
+            caxis([-0.4 0.4])
+            axis([dnUTC_AQ(idxAQ(1)) dnUTC_AQ(idxAQ(end)) 1 11])
+            datetick('x','keeplimits')
+            y1 = get(gca,'ylim');
+            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
+            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 11])
+            xlabel('Time'); ylabel('Distance above bed (m)');
+            ttlU = ['U velocity at STRING B'];
+            title(ttlU)
+            
+            timeMat = repmat(dnUTC(idxTChain),[1,length(zBedB)]);
+            sub3 = subplot(2,3,[5 6]);
+            pcolor(timeMat',zBedB_All(idxTChain,:)',tempB(:,idxTChain))
+            shading flat; hcb =colorbar;
+            colormap(sub3, parula);
+            hold on
+%             pcolor(dnUTC(idxTChain),depth_tchain,tempB(1,idxTChain))
+            % plot(dnUTC_AQ(idxAQ),(depth(idxAQ)-mean(depth(idxAQ))+4),'r')
+            % plot(dnTides(idxTides),(WL(idxTides)-mean(WL(idxTides))+4),'y')
+            caxis(tempLimits)
+            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 max(depth)])
+            datetick('x','keeplimits')
+            y1 = get(gca,'ylim');
+            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
+            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 9])
+            xlabel('Time'); ylabel('Distance above bed (m)');
+            ttlC = ['Temperature at STRING B'];
+            title(ttlC)
+            xlabel(hcb,'Temperature C')
+            
             ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
             imgNum=imgNum+1;
             print(fig,ttlFig,'-dpng')
@@ -393,22 +578,60 @@ for i = 1:length(cubeList)
         for rr = 1:6
             fig = figure('visible','off');
             fig.PaperUnits = 'inches';
-            fig.PaperPosition = [0 0 4 6];
+            fig.PaperPosition = [0 0 12 6];
+
+            sub1 = subplot(2,3, [1 4]);
             pcolor(XX,YY,tC')
             shading interp; axis image
-            colormap(hot)
-            colorbar
             hold on
             plot(xJMC(1:3),yJMC(1:3),'b.','MarkerSize',20)
             plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
 %             plot(xOcC,yOcC,'g.','MarkerSize',20)
+            colormap(sub1,hot)
+%             colorbar
             caxis([colorAxisLimits(1) colorAxisLimits(2)])
             axis([XYLimits(1,1) XYLimits(1,2) XYLimits(2,1) XYLimits(2,2)])
-            ttl = [num2str(t_dv(1)) num2str(t_dv(2),'%02i') num2str(t_dv(3),'%02i') ' - ',...
+              ttl = [num2str(t_dv(1)) num2str(t_dv(2),'%02i') num2str(t_dv(3),'%02i') ' - ',...
                 num2str(t_dv(4),'%02i') ':', num2str(t_dv(5),'%02i')...
                 ':' num2str(round(t_dv(6)),'%02i') ' UTC'];
             title(ttl)
             xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
+            ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
+            
+            time = t_dn;
+            sub2 = subplot(2,3,[2 3]);
+            pcolor(dnUTC_AQ(idxAQ),ZBed,Ubave(idxAQ,:)')
+            shading flat; colorbar; colormap(sub2, cMap)
+            caxis([-0.4 0.4])
+            axis([dnUTC_AQ(idxAQ(1)) dnUTC_AQ(idxAQ(end)) 1 11])
+            datetick('x','keeplimits')
+            y1 = get(gca,'ylim');
+            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
+            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 11])
+            xlabel('Time'); ylabel('Distance above bed (m)');
+            ttlU = ['U velocity at STRING B'];
+            title(ttlU)
+            
+            timeMat = repmat(dnUTC(idxTChain),[1,length(zBedB)]);
+            sub3 = subplot(2,3,[5 6]);
+            pcolor(timeMat',zBedB_All(idxTChain,:)',tempB(:,idxTChain))
+            shading flat; hcb =colorbar;
+            colormap(sub3, parula);
+            hold on
+%             pcolor(dnUTC(idxTChain),depth_tchain,tempB(1,idxTChain))
+            % plot(dnUTC_AQ(idxAQ),(depth(idxAQ)-mean(depth(idxAQ))+4),'r')
+            % plot(dnTides(idxTides),(WL(idxTides)-mean(WL(idxTides))+4),'y')
+            caxis(tempLimits)
+            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 max(depth)])
+            datetick('x','keeplimits')
+            y1 = get(gca,'ylim');
+            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
+            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 9])
+            xlabel('Time'); ylabel('Distance above bed (m)');
+            ttlC = ['Temperature at STRING B'];
+            title(ttlC)
+            xlabel(hcb,'Temperature C')
+            
             ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
             imgNum=imgNum+1;
             print(fig,ttlFig,'-dpng')

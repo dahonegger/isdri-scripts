@@ -91,14 +91,14 @@ for iP = 1:length(startTime);
     transectMatrixFiltered200 = zeros(size(transectMatrix200));
     for t = 1:length(times)
 %         transectMatrixFiltered75(t,:) = smooth1d_loess(transectMatrix75(t,:),yC,1200,yC);
-        transectMatrixFiltered100(t,:) = smooth1d_loess(transectMatrix100(t,:),yC,1200,yC);
-        transectMatrixFiltered150(t,:) = smooth1d_loess(transectMatrix150(t,:),yC,1200,yC);
-        transectMatrixFiltered200(t,:) = smooth1d_loess(transectMatrix200(t,:),yC,1200,yC);
+%         transectMatrixFiltered100(t,:) = smooth1d_loess(transectMatrix100(t,:),yC,1200,yC);
+%         transectMatrixFiltered150(t,:) = smooth1d_loess(transectMatrix150(t,:),yC,1200,yC);
+%         transectMatrixFiltered200(t,:) = smooth1d_loess(transectMatrix200(t,:),yC,1200,yC);
         
 % %         transectMatrixFiltered75(t,:) = smooth1d_loess(transectMatrix75(t,:),yC,1200,yC);
-%         transectMatrixFiltered100(t,:) = smooth1d_loess(transectMatrix100(t,:),yC,400,yC);
-%         transectMatrixFiltered150(t,:) = smooth1d_loess(transectMatrix150(t,:),yC,400,yC);
-%         transectMatrixFiltered200(t,:) = smooth1d_loess(transectMatrix200(t,:),yC,400,yC);
+        transectMatrixFiltered100(t,:) = smooth1d_loess(transectMatrix100(t,:),yC,400,yC);
+        transectMatrixFiltered150(t,:) = smooth1d_loess(transectMatrix150(t,:),yC,400,yC);
+        transectMatrixFiltered200(t,:) = smooth1d_loess(transectMatrix200(t,:),yC,400,yC);
     end
     
     % subtract off smoothed transect to find anomaly

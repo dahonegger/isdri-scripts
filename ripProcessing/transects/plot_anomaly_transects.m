@@ -1,58 +1,120 @@
 % plot_anomaly_transects.m
 % 1/24/2018
+clear variables
 
+startTime = '20170925';
+endTime = '20171001';
+Loess = 'Loess_1200\';
+distanceFromPI = '100';
+baseDir = 'E:\guadalupe\postprocessed\alongshoreTransectMatrix\ANOMALY_TRANSECTS\';
+
+dnStart = datenum([str2num(startTime(1:4)),str2num(startTime(5:6)),str2num(startTime(7:8)),0,0,0]);
+dnEnd = datenum([str2num(endTime(1:4)),str2num(endTime(5:6)),str2num(endTime(7:8)),0,0,0]);
 
 addpath(genpath('C:\Data\ISDRI\isdri-scripts')) %github repository
 load('C:\Data\ISDRI\isdri-scripts\ripProcessing\transects\cMap.mat')
+% matFile = 'E:\guadalupe\processed\2017-09-02\Guadalupe_20172452035_pol.mat';
+% matFile2 = 'E:\guadalupe\processed\2017-09-02\Guadalupe_20172452037_pol.mat';
+% matFile3 = 'E:\guadalupe\processed\2017-09-02\Guadalupe_20172452039_pol.mat';
+% matFile = 'E:\guadalupe\processed\2017-09-05\Guadalupe_20172482149_pol.mat';
+% matFile = 'E:\guadalupe\processed\2017-09-07\Guadalupe_20172501821_pol.mat'; % THIS ONE
+% matFile = 'E:\guadalupe\processed\2017-09-08\Guadalupe_20172511431_pol.mat';  % THIS ONE
+matFile = 'E:\guadalupe\processed\2017-09-30\Guadalupe_20172730815_pol.mat'; % THIS ONE
+% matFile = 'E:\guadalupe\processed\2017-10-05\Guadalupe_20172780821_pol.mat'; 
+
+load(matFile)
+% data1= data; clear data;
+% load(matFile2)
+% data2 = data; clear data
+% load(matFile3)
+% data3 = data; clear data
 
 %% load transects
-startTime = '20171010';
-endTime = '20171020';
-
-baseDir = 'E:\guadalupe\postprocessed\alongshoreTransectMatrix\ANOMALY_TRANSECTS\';
-Loess = 'Loess_800\';
-matName100 = [baseDir Loess startTime '_' endTime '_TMat100.mat'];
-matName150 = [baseDir Loess startTime '_' endTime '_TMat150.mat'];
-matName200 = [baseDir Loess startTime '_' endTime '_TMat200.mat'];
-timeMat = [baseDir startTime '_' endTime '_time.mat'];
+matName = [baseDir Loess 'TMat' distanceFromPI '_all.mat'];
+timeMat = [baseDir 'timesAll.mat'];
 
 load(timeMat)
-load(matName200)
+load(matName);
+if str2num(distanceFromPI) == 100; TMat = TMat100; 
+elseif str2num(distanceFromPI) == 150; TMat = TMat150;
+elseif str2num(distanceFromPI) == 200; TMat = TMat200;
+end
+
+t = times(times>=dnStart & times<=dnEnd);
+TM = TMat(times>=dnStart & times<=dnEnd,:);
 
 yC = -800:800;
-% AST = mean(TMat200(260:end,:) ,1);
-AST = mean(TMat200 ,1);
+
+AST = mean(TM,1);
+[peaks,peakIdx] = findpeaks(AST,'MinPeakWidth',50);
+[~,sortedPeakIdx] = sort(peaks,'descend');
+maxPeakIdx = sortedPeakIdx(1:2);
 
 figure(1)
-plot(AST,yC)
+subplot(1,2,1)
+plot(AST,yC,'k')
 hold on
+set (gca,'Xdir','reverse')
+plot(AST(peakIdx),yC(peakIdx),'r*')
 ttl = [startTime ' - ' endTime];
-title('Average intensity anomaly')
+title(['Average intensity anomaly ' startTime '-' endTime])
 xlabel('Intensity anomaly')
 ylabel('Alongshore y (m)')
 % legend(ttl)
 
+%% radar image
+% define parameters
+numRots = 200;
+startRot = size(data,3) - 201;
+% startRot = size(data1,3) - 201;
 
-% % figure,
-% % pcolor(times,yC,TMat100')
-% % shading flat
-% % colormap(cMap)
-% % caxis([-80 80])
-% % datetick('x')
-% % colorbar
-% % caxis([-100 100])
-% % xlabel('Time'); ylabel('Alongshore y (m)')
-% % ttl = [startTime ' - ' endTime ', 100 m from peak intensity'];
-% % title(ttl)
-% % 
-% % %% 
-% % id = 309;
-% % MASK1 = datenum([dv(id,1),dv(id,2),dv(id,3),dv(id,4),dv(id,5),dv(id,6)]);
-% % id = id+1;
-% % MASK2 = datenum([dv(id,1),dv(id,2),dv(id,3),dv(id,4),dv(id,5),dv(id,6)]);
-% % timeMask = MASK1:1/24:MASK2;
-% % yMask = zeros(length(yC),length(timeMask));
-% % hold on
-% % pcolor(timeMask,yC,yMask)
-% % shading flat
-% % xlabel('Time')
+% define parameters
+rotation = 13;
+x0 = 0;         % for local
+y0 = 0;
+axisLimits = [-1500 -500 -800 800];
+
+% create timex
+clear timex
+% timex = mean(data(:,:,startRot:(numRots+startRot)),3);
+% timex1 = mean(data1,3);
+% timex2 = mean(data2,3);
+% timex3 = mean(data3,3);
+% timexAll = cat(3,timex1,timex2,timex3);
+timex = mean(data,3);
+% timex = mean(timexAll,3);
+% time = mean(epoch2Matlab(timeInt(1,startRot:(numRots+startRot))));
+time = mean(epoch2Matlab(timeInt(1,:)));
+dv = datevec(time);
+
+% Convert to world coordinates
+heading = results.heading-rotation;
+[AZI,RG] = meshgrid(Azi,Rg);
+TH = pi/180*(90-AZI-heading);
+[xdom,ydom] = pol2cart(TH,RG);
+xdom = (xdom + x0);
+ydom = (ydom + y0);
+vec = axisLimits(1):axisLimits(2);
+
+% plot
+hAxes = subplot(1,2,2);
+pcolor(xdom,ydom,timex)
+shading flat; axis image;
+hold on
+axis(axisLimits)
+xlim = get( hAxes, 'Xlim' );
+for i = 1:length(peakIdx)
+    plot(xlim,[yC(peakIdx(i)) yC(peakIdx(i))],'b-')
+end
+% for i = 1:length(maxPeakIdx)
+%     plot(xlim,[yC(peakIdx(maxPeakIdx(i))) yC(peakIdx(maxPeakIdx(i)))],'b-')
+% end
+colormap(hot)
+caxis([50 230])
+axis(axisLimits)
+xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)');
+ttl = [num2str(dv(1)) num2str(dv(2),'%02i') num2str(dv(3),'%02i')...
+    ' - ' num2str(dv(4),'%02i') ':' num2str(dv(5),'%02i') ':'...
+    num2str(round(dv(6)),'%02i') ' UTC'];
+title(ttl)
+% colorbar

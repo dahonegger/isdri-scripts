@@ -2,17 +2,17 @@
 
 clear variables
 addpath(genpath('C:\Data\ISDRI\isdri-scripts'))
-wholeDomain = 1;
+wholeDomain = 0;
 smallDomain = 1;
 
 % Load file
-matFile = 'E:\guadalupe\processed\2017-10-18\Guadalupe_20172911200_pol.mat';
+matFile = 'E:\guadalupe\processed\2017-10-18\Guadalupe_20172910030_pol.mat';
 load(matFile)
 
 % define parameters
 numRots = 200;
 % startRot = size(data,3) - 201;
-startRot = size(data,3) - 201;
+startRot = 150;
 
 %% whole domain
 if wholeDomain == 1
@@ -55,12 +55,17 @@ if smallDomain == 1
     rotation = 13;
     x0 = 0;         % for local
     y0 = 0;
-    axisLimits = [-2000 -500 -1000 1000];
+    axisLimits = [-1500 -500 -1000 1000];
     
     % create timex
+    if size(data,3) > 65
     clear timex
     timex = mean(data(:,:,startRot:(numRots+startRot)),3);
     time = mean(epoch2Matlab(timeInt(1,startRot:(numRots+startRot))));
+    dv = datevec(time);
+    end
+    
+    time = mean(epoch2Matlab(timeInt(1,:)));
     dv = datevec(time);
     
     % Convert to world coordinates
