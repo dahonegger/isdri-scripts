@@ -1,4 +1,4 @@
-function [Tbave,Ubave,Vbave,Wbave,ZBed,depth] = loadADCP(fname, bave, rot)
+function [Tbave,Ubave,Vbave,Wbave,ZBed,depthAve] = loadADCP(fname, bave, rot)
 % 1/19/2018
 % band averages ADCP data using bave, rotates it using rot, and converts
 % time from PDT to UTC
@@ -43,16 +43,17 @@ if bave == 1    % leave at 30 seconds
     Ubave = U;
     Vbave = V; 
     Wbave = W;
+    depthAve = depth;
 else
     for ir = 1:bave:(size(U,1) - bave + 1);
         Tbave(ir) = mean(dnUTC_AQ(ir:(ir+bave-1)));
+        depthAve(ir,ic) = mean(depth(ir:(ir+bave-1)));
     end
     for ic = 1:size(U,2)
         for ir = 1:bave:(size(U,1) - bave + 1);
             Ubave(ir,ic) = mean(U(ir:(ir+bave-1),ic));
             Vbave(ir,ic) = mean(V(ir:(ir+bave-1),ic));
             Wbave(ir,ic) = mean(W(ir:(ir+bave-1),ic));
-            
         end
     end
 end
@@ -60,6 +61,7 @@ Tbave = Tbave(1:bave:end);
 Ubave = Ubave(1:bave:end,:);
 Vbave = Vbave(1:bave:end,:);
 Wbave = Wbave(1:bave:end,:);
+depthAve = depthAve(1:bave:end);
 end
 
 
