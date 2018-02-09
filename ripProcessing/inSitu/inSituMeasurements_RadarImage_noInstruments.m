@@ -55,7 +55,7 @@ enddn = datenum([str2num(endTime(1:4)),str2num(endTime(5:6)),...
 cubeList = cubeListAll(firstFileIndex:lastFileIndex);
 
 %% load variables
-rot = -13;
+rot = 13;
 bave = 3;
 [Tbave,Ubave,Vbave,Wbave] = loadADCP('D:\Data\ISDRI\SupportData\MacMahan\STR3_AQ.mat', bave, rot);
 

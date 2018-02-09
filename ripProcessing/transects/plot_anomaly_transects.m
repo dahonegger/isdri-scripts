@@ -2,10 +2,10 @@
 % 1/24/2018
 clear variables
 
-startTime = '20170925';
-endTime = '20171001';
-Loess = 'Loess_1200\';
-distanceFromPI = '100';
+startTime = '20171001';
+endTime = '20171010';
+Loess = 'Loess_1200_1000m\';
+distanceFromPI = '200';
 baseDir = 'E:\guadalupe\postprocessed\alongshoreTransectMatrix\ANOMALY_TRANSECTS\';
 
 dnStart = datenum([str2num(startTime(1:4)),str2num(startTime(5:6)),str2num(startTime(7:8)),0,0,0]);
@@ -19,7 +19,8 @@ load('C:\Data\ISDRI\isdri-scripts\ripProcessing\transects\cMap.mat')
 % matFile = 'E:\guadalupe\processed\2017-09-05\Guadalupe_20172482149_pol.mat';
 % matFile = 'E:\guadalupe\processed\2017-09-07\Guadalupe_20172501821_pol.mat'; % THIS ONE
 % matFile = 'E:\guadalupe\processed\2017-09-08\Guadalupe_20172511431_pol.mat';  % THIS ONE
-matFile = 'E:\guadalupe\processed\2017-09-30\Guadalupe_20172730815_pol.mat'; % THIS ONE
+% matFile = 'E:\guadalupe\processed\2017-09-30\Guadalupe_20172730815_pol.mat'; % THIS ONE
+matFile = 'E:\guadalupe\processed\2017-10-04\Guadalupe_20172770335_pol.mat'; % THIS ONE
 % matFile = 'E:\guadalupe\processed\2017-10-05\Guadalupe_20172780821_pol.mat'; 
 
 load(matFile)
@@ -35,29 +36,29 @@ timeMat = [baseDir 'timesAll.mat'];
 
 load(timeMat)
 load(matName);
-if str2num(distanceFromPI) == 100; TMat = TMat100; 
-elseif str2num(distanceFromPI) == 150; TMat = TMat150;
-elseif str2num(distanceFromPI) == 200; TMat = TMat200;
-end
+% if str2num(distanceFromPI) == 100; TMat = TMat100; 
+% elseif str2num(distanceFromPI) == 150; TMat = TMat150;
+% elseif str2num(distanceFromPI) == 200; TMat = TMat200;
+% end
 
 t = times(times>=dnStart & times<=dnEnd);
 TM = TMat(times>=dnStart & times<=dnEnd,:);
 
-yC = -800:800;
+yC = -1000:1000;
 
 AST = mean(TM,1);
 [peaks,peakIdx] = findpeaks(AST,'MinPeakWidth',50);
 [~,sortedPeakIdx] = sort(peaks,'descend');
-maxPeakIdx = sortedPeakIdx(1:2);
+maxPeakIdx = sortedPeakIdx(1:3);
 
 figure(1)
 subplot(1,2,1)
-plot(AST,yC,'k')
+plot(AST,yC,'b')
 hold on
 set (gca,'Xdir','reverse')
-plot(AST(peakIdx),yC(peakIdx),'r*')
+% plot(AST(peakIdx(maxPeakIdx)),yC(peakIdx(maxPeakIdx)),'ro')
 ttl = [startTime ' - ' endTime];
-title(['Average intensity anomaly ' startTime '-' endTime])
+title(['Mean intensity anomaly ' startTime '-' endTime])
 xlabel('Intensity anomaly')
 ylabel('Alongshore y (m)')
 % legend(ttl)
@@ -72,7 +73,7 @@ startRot = size(data,3) - 201;
 rotation = 13;
 x0 = 0;         % for local
 y0 = 0;
-axisLimits = [-1500 -500 -800 800];
+axisLimits = [-1500 -500 -1000 1000];
 
 % create timex
 clear timex
@@ -103,14 +104,14 @@ shading flat; axis image;
 hold on
 axis(axisLimits)
 xlim = get( hAxes, 'Xlim' );
-for i = 1:length(peakIdx)
-    plot(xlim,[yC(peakIdx(i)) yC(peakIdx(i))],'b-')
-end
+% for i = 1:length(peakIdx)
+%     plot(xlim,[yC(peakIdx(i)) yC(peakIdx(i))],'b-')
+% end
 % for i = 1:length(maxPeakIdx)
-%     plot(xlim,[yC(peakIdx(maxPeakIdx(i))) yC(peakIdx(maxPeakIdx(i)))],'b-')
+%     plot(xlim,[yC(peakIdx(maxPeakIdx(i))) yC(peakIdx(maxPeakIdx(i)))],'b-','linewidth',1.5)
 % end
 colormap(hot)
-caxis([50 230])
+caxis([30 220])
 axis(axisLimits)
 xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)');
 ttl = [num2str(dv(1)) num2str(dv(2),'%02i') num2str(dv(3),'%02i')...

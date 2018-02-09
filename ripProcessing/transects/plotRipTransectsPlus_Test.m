@@ -32,11 +32,11 @@ for iP = 1:length(startTime);
     
     % add path to mat files and choose directory for png's
     baseDir = [Hub 'guadalupe\processed\'];
-    saveDir = [Hub 'guadalupe\postprocessed\alongshoreTransectFigures\'...
-        num2str(startTime{iP}(1:4)) num2str(startTime{iP}(5:6),'%02i')...
-        num2str(startTime{iP}(7:8),'%02i') '_' num2str(endTime{iP}(1:4))...
-        num2str(endTime{iP}(5:6),'%02i') num2str(endTime{iP}(7:8),'%02i') '\'];
-    matDir = [Hub 'guadalupe\postprocessed\alongshoreTransectMatrix\'];
+%     saveDir = [Hub 'guadalupe\postprocessed\alongshoreTransectFigures\'...
+%         num2str(startTime{iP}(1:4)) num2str(startTime{iP}(5:6),'%02i')...
+%         num2str(startTime{iP}(7:8),'%02i') '_' num2str(endTime{iP}(1:4))...
+%         num2str(endTime{iP}(5:6),'%02i') num2str(endTime{iP}(7:8),'%02i') '\'];
+    matDir = [Hub 'guadalupe\postprocessed\alongshoreTransectMatrix\all_1000\'];
     % matDir = 'C:\Data\ISDRI\postprocessed\alongshoreTransectMatrix\';
     
     %     if exist(saveDir)
@@ -44,17 +44,17 @@ for iP = 1:length(startTime);
     %% define domain and rotation
     xCutoff = 1168;
     domainRotation = 13;
-    yC = -800:800;
+    yC = -1000:1000;
     xC = -1200:-500;
     xCMaxI = -1100:-500;
     cAxisLims = [-30 30];
     
     %% Prep files
     % make save directory
-    mkdir(saveDir);
-    mkdir([saveDir '\75']); mkdir([saveDir '\100']);
-    mkdir([saveDir '\150']); mkdir([saveDir '\200']);
-    
+%     mkdir(saveDir);
+%     mkdir([saveDir '\75']); mkdir([saveDir '\100']);
+%     mkdir([saveDir '\150']); mkdir([saveDir '\200']);
+%     
     for dd = 1:length(days)
         fn{dd} = [matDir endTime{iP}(1:4) '-' num2str(months(dd),'%02d') '-' num2str(days(dd),'%02d') '.mat'];
         folderName{dd} = [baseDir endTime{iP}(1:4) '-' num2str(months(dd),'%02d') '-' num2str(days(dd),'%02d')];
@@ -66,9 +66,12 @@ for iP = 1:length(startTime);
         str2num(endTime{iP}(10:11)) str2num(endTime{iP}(12:13)) 0]);
     
     % Load transects
-    idxMaxIAll = []; transectMatrix100 = []; timesAll = []; transectMatrix150 = []; transectMatrix200 = []; transectMatrix75 = [];
+    idxMaxIAll = []; transectMatrix100 = []; timesAll = []; transectMatrix150 = [];...
+        transectMatrix200 = []; transectMatrix75 = []; transectMatrix30 = []; transectMatrix0 = [];
     for i = 1:numel(fn)
         load(fn{i})
+        transectMatrix0 = vertcat(transectMatrix0,txIMat);
+        transectMatrix30 = vertcat(transectMatrix30,txIMat_30);
         transectMatrix75 = vertcat(transectMatrix75,txIMat_75);
         transectMatrix100 = vertcat(transectMatrix100,txIMat_100);
         transectMatrix150 = vertcat(transectMatrix150,txIMat_150);
@@ -78,6 +81,8 @@ for iP = 1:length(startTime);
     end
     
     times = timesAll(timesAll>dn1 & timesAll<dnEnd);
+    transectMatrix0 = transectMatrix0(timesAll>dn1 & timesAll<dnEnd,:);
+    transectMatrix30 = transectMatrix30(timesAll>dn1 & timesAll<dnEnd,:);
     transectMatrix75 = transectMatrix75(timesAll>dn1 & timesAll<dnEnd,:);
     transectMatrix100 = transectMatrix100(timesAll>dn1 & timesAll<dnEnd,:);
     transectMatrix150 = transectMatrix150(timesAll>dn1 & timesAll<dnEnd,:);
@@ -85,41 +90,53 @@ for iP = 1:length(startTime);
     clear idxMaxI; idxMaxI = idxMaxIAll(timesAll>dn1 & timesAll<dnEnd,:);
     
     % smooth transects using a loess filter
+    transectMatrixFiltered0 = zeros(size(transectMatrix0));
+    transectMatrixFiltered30 = zeros(size(transectMatrix30));
     transectMatrixFiltered75 = zeros(size(transectMatrix75));
     transectMatrixFiltered100 = zeros(size(transectMatrix100));
     transectMatrixFiltered150 = zeros(size(transectMatrix150));
     transectMatrixFiltered200 = zeros(size(transectMatrix200));
     for t = 1:length(times)
-%         transectMatrixFiltered75(t,:) = smooth1d_loess(transectMatrix75(t,:),yC,1200,yC);
-%         transectMatrixFiltered100(t,:) = smooth1d_loess(transectMatrix100(t,:),yC,1200,yC);
-%         transectMatrixFiltered150(t,:) = smooth1d_loess(transectMatrix150(t,:),yC,1200,yC);
-%         transectMatrixFiltered200(t,:) = smooth1d_loess(transectMatrix200(t,:),yC,1200,yC);
+        transectMatrixFiltered0(t,:) = smooth1d_loess(transectMatrix0(t,:),yC,1200,yC);
+        transectMatrixFiltered30(t,:) = smooth1d_loess(transectMatrix30(t,:),yC,1200,yC);
+        transectMatrixFiltered75(t,:) = smooth1d_loess(transectMatrix75(t,:),yC,1200,yC);
+        transectMatrixFiltered100(t,:) = smooth1d_loess(transectMatrix100(t,:),yC,1200,yC);
+        transectMatrixFiltered150(t,:) = smooth1d_loess(transectMatrix150(t,:),yC,1200,yC);
+        transectMatrixFiltered200(t,:) = smooth1d_loess(transectMatrix200(t,:),yC,1200,yC);
         
 % %         transectMatrixFiltered75(t,:) = smooth1d_loess(transectMatrix75(t,:),yC,1200,yC);
-        transectMatrixFiltered100(t,:) = smooth1d_loess(transectMatrix100(t,:),yC,400,yC);
-        transectMatrixFiltered150(t,:) = smooth1d_loess(transectMatrix150(t,:),yC,400,yC);
-        transectMatrixFiltered200(t,:) = smooth1d_loess(transectMatrix200(t,:),yC,400,yC);
+%         transectMatrixFiltered100(t,:) = smooth1d_loess(transectMatrix100(t,:),yC,400,yC);
+%         transectMatrixFiltered150(t,:) = smooth1d_loess(transectMatrix150(t,:),yC,400,yC);
+%         transectMatrixFiltered200(t,:) = smooth1d_loess(transectMatrix200(t,:),yC,400,yC);
     end
     
     % subtract off smoothed transect to find anomaly
-%     TMat75 = transectMatrix75 - transectMatrixFiltered75;
+    TMat0 = transectMatrix0 - transectMatrixFiltered0;
+    TMat30 = transectMatrix30 - transectMatrixFiltered30;
+    TMat75 = transectMatrix75 - transectMatrixFiltered75;
     TMat100 = transectMatrix100 - transectMatrixFiltered100;
     TMat150 = transectMatrix150 - transectMatrixFiltered150;
     TMat200 = transectMatrix200 - transectMatrixFiltered200;
-    load('C:\Data\ISDRI\isdri-scripts\ripProcessing\transects\cMap.mat')
-    saveDir = 'E:\guadalupe\postprocessed\alongshoreTransectMatrix\ANOMALY_TRANSECTS\';
+%     load('C:\Data\ISDRI\isdri-scripts\ripProcessing\transects\cMap.mat')
+    saveDir = 'E:\guadalupe\postprocessed\alongshoreTransectMatrix\ANOMALY_TRANSECTS\Loess_1200_1000m';
+    matName0 = [saveDir startTime{iP}(1:8) '_' endTime{iP}(1:8) '_TMat0.mat'];
+    matName30 = [saveDir startTime{iP}(1:8) '_' endTime{iP}(1:8) '_TMat30.mat'];
+    matName75 = [saveDir startTime{iP}(1:8) '_' endTime{iP}(1:8) '_TMat075.mat'];
     matName100 = [saveDir startTime{iP}(1:8) '_' endTime{iP}(1:8) '_TMat100.mat'];
     matName150 = [saveDir startTime{iP}(1:8) '_' endTime{iP}(1:8) '_TMat150.mat'];
     matName200 = [saveDir startTime{iP}(1:8) '_' endTime{iP}(1:8) '_TMat200.mat'];
     timeMatName = [saveDir startTime{iP}(1:8) '_' endTime{iP}(1:8) '_time.mat'];    
 
+    save(matName0,'TMat0')
+    save(matName30,'TMat30')
+    save(matName75,'TMat75')
     save(matName100,'TMat100')
     save(matName150,'TMat150')
     save(matName200,'TMat200')
 %     save(timeMatName,'times')
 
     clear timeMatName
-    clear matName100 matName150 matName200
+    clear matName0 matName75 matName30 matName100 matName150 matName200
     
 %     %% loop through mat files
 %     for iDay = 1:length(days) %loop through days

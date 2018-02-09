@@ -20,16 +20,17 @@ dvUTC_AQ(:,4) = dvPDT_AQ(:,4)+7;  % add 7 hours to convert from PDT to UTC
 dnUTC_AQ = datenum(dvUTC_AQ);
 dvUTC_AQ = datevec(dnUTC_AQ);
 
-
 %% define rotation
 
 R = [cosd(rot) -sind(rot); sind(rot) cosd(rot)];
+U = zeros(size(Ue));
+V = zeros(size(Un));
 
 for i = 1:size(Ue,2)
-    velocity = [Ue(:,i) Un(:,i)];
-    velR = velocity*R;
-    U(:,i) = velR(:,1);
-    V(:,i) = velR(:,2);
+    velocity = [Ue(:,i)';Un(:,i)'];
+    velR = R*velocity;
+    U(:,i) = velR(1,:);
+    V(:,i) = velR(2,:);
 end
 
 %% band average to a different frequency
@@ -38,6 +39,7 @@ Ubave = zeros(size(U));
 Vbave = zeros(size(V));
 Wbave = zeros(size(W));
 Tbave = zeros(size(dnUTC_AQ));
+depthAve = zeros(size(depth));
 if bave == 1    % leave at 30 seconds
     Tbave = dnUTC_AQ; 
     Ubave = U;
@@ -47,7 +49,7 @@ if bave == 1    % leave at 30 seconds
 else
     for ir = 1:bave:(size(U,1) - bave + 1);
         Tbave(ir) = mean(dnUTC_AQ(ir:(ir+bave-1)));
-        depthAve(ir,ic) = mean(depth(ir:(ir+bave-1)));
+        depthAve(ir) = mean(depth(ir:(ir+bave-1)));
     end
     for ic = 1:size(U,2)
         for ir = 1:bave:(size(U,1) - bave + 1);

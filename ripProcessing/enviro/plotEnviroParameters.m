@@ -21,14 +21,14 @@ clear dv_rips
 
 
 %% Load wind data from wind station file
-[dnWind,magWind,dirWind] = loadWindNDBC('D:\Data\ISDRI\SupportData\Wind\MetData_NDBC46011.txt');
+[dnWind,magWind,dirWind] = loadWindNDBC_historical('D:\Data\ISDRI\SupportData\Wind\MetData_NDBC46011.txt');
 
 % Load wave data from wave station file
-[dnWaves,Hs,dirWaves,TpAve,TpS] = loadWavesNDBC('D:\Data\ISDRI\Waves\SupportData\WaveData_NDBC46011.txt');
+[dnWaves,Hs,dirWaves,TpAve,TpS] = loadWavesNDBC_historical('D:\Data\ISDRI\SupportData\Waves\WaveData_NDBC46011.txt');
 
 % Load tide data from tide station file
-[dnTides,waterSurfaceElevation] = loadTidesNOAA('D:\Data\ISDRI\SupportData\Tides\TideData_NOAA9411406.txt');
-waterSurfaceElevation(waterSurfaceElevation == -999) = nan;
+[dnTides,WL] = loadTidesNOAA('D:\Data\ISDRI\SupportData\Tides\TideData_NOAA9411406.txt');
+WL(WL == -999) = nan;
 
 
 %% make rip vector 

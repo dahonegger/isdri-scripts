@@ -44,7 +44,7 @@ dayFolder = dir([baseDir,'2017*']);
 waterSurfaceElevation(waterSurfaceElevation == -999) = nan;
 
 % Load current vectors
-[dnUTC_AQ,U,V,W] = loadADCP('D:\Data\ISDRI\SupportData\MacMahan\STR3_AQ.mat',4,-13);
+[dnUTC_AQ,U,V,W,Zbed,depth] = loadADCP('D:\Data\ISDRI\SupportData\MacMahan\STR3_AQ.mat',4,-13);
 
 for i = 1:size(U,1)
     idx(i) = find(~isnan(U(i,:)),1,'last');

@@ -76,7 +76,7 @@ tides_dnrips_Guadalupe = interp1(dnUTC_AQ,depth,dn);
 tides_dnrips_Guadalupe(ripVecGuadalupe ~= 1) = nan;
 
 %% Rotate velocities into local coordinate system
-rot = -13;
+rot = 13;
 R = [cosd(rot) -sind(rot); sind(rot) cosd(rot)];
 
 for i = 1:size(Ue,2)

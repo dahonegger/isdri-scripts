@@ -12,7 +12,7 @@ endTime = '20171002_2230';
 
 Hub = 'E'; 
 baseDir = [Hub ':\guadalupe\processed\'];
-saveFolder = ['E:\guadalupe\postprocessed\ripVideos\' startTime '-' endTime];
+saveFolder = ['E:\guadalupe\postprocessed\ripVideos\temperatureProfiles\' startTime '-' endTime];
 mkdir(saveFolder)
 
 %% define figure parameters
@@ -21,9 +21,18 @@ colorAxisLimits = [20 220];
 XYLimits = [-1500 -500; -1000 1000];
 
 %% load variables
-rot = -13;
+rot = 13;
 bave = 3;
 [dnUTC_AQ,Ubave,Vbave,Wbave,ZBed,depth] = loadADCP('D:\Data\ISDRI\SupportData\MacMahan\STR3_AQ.mat', bave, rot);
+
+for i = 1:size(Ubave,1)
+    idx(i) = find(~isnan(Ubave(i,:)),1,'last');
+    UUS(i,:) = Ubave(i,(idx(i)-2):idx(i));
+    VVS(i,:) = Vbave(i,(idx(i)-2):idx(i));
+end
+
+U_surface = mean(UUS,2);
+V_surface = mean(VVS,2);
 
 A = load('D:\Data\ISDRI\SupportData\MacMahan\ptsal_tchain_STR3_A');  % Most offshore
 B = load('D:\Data\ISDRI\SupportData\MacMahan\ptsal_tchain_STR3_B');  % Middle, with ADCP
@@ -210,9 +219,15 @@ for i = 1:length(cubeList)
         aziOcC = aziOc - rotation;
         thOcC = pi/180*(90 - aziOcC - results.heading);
         [xOcC,yOcC] = pol2cart(thOcC,rgOc);
-                
+
+        
         % make .pngs
         for s = 1:rate:c3
+            time = datenum(timeCube1(s,:));
+            UNow = interp1(dnUTC_AQ, U_surface, time);
+            VNow = interp1(dnUTC_AQ, V_surface,time);
+            vMag = sqrt(UNow^2 + VNow^2);
+            
             fig = figure('visible','off');
             fig.PaperUnits = 'inches';
             fig.PaperPosition = [0 0 12 6];
@@ -223,6 +238,8 @@ for i = 1:length(cubeList)
             hold on
             plot(xJMC(1:3),yJMC(1:3),'b.','MarkerSize',20)
             plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
+            arrow([xJMC(2) yJMC(2)],[(UNow*1000+xJMC(2)) (VNow*1000+yJMC(2))],...
+                'Length',7,'Width',30*vMag,'tipangle',30,'facecolor','white','edgecolor','white');
 %             plot(xOcC,yOcC,'g.','MarkerSize',20)
             colormap(sub1,hot)
 %             colorbar
@@ -235,7 +252,7 @@ for i = 1:length(cubeList)
             xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
             ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
             
-            time = datenum(timeCube1(s,:));
+            
             sub2 = subplot(2,3,[2 3]);
             pcolor(dnUTC_AQ(idxAQ),ZBed,Ubave(idxAQ,:)')
             shading flat; colorbar; colormap(sub2, cMap)
@@ -275,6 +292,11 @@ for i = 1:length(cubeList)
             clear ttl ttlFig
         end
         for s = (buffer+2):rate:(size(cube2,3) - buffer - 2);
+            time = datenum(timeCube2(s,:));
+            UNow = interp1(dnUTC_AQ, U_surface, time);
+            VNow = interp1(dnUTC_AQ, V_surface,time);
+            vMag = sqrt(UNow^2 + VNow^2);
+            
             fig = figure('visible','off');
             fig.PaperUnits = 'inches';
             fig.PaperPosition = [0 0 12 6];
@@ -286,6 +308,8 @@ for i = 1:length(cubeList)
             plot(xJMC(1:3),yJMC(1:3),'b.','MarkerSize',20)
             plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
 %             plot(xOcC,yOcC,'g.','MarkerSize',20)
+             arrow([xJMC(2) yJMC(2)],[(UNow*1000+xJMC(2)) (VNow*1000+yJMC(2))],...
+                'Length',7,'Width',30*vMag,'tipangle',30,'facecolor','white','edgecolor','white');
             colormap(sub1,hot)
 %             colorbar
             caxis([colorAxisLimits(1) colorAxisLimits(2)])
@@ -336,7 +360,13 @@ for i = 1:length(cubeList)
             clear ttl ttlFig
         end
         for s = buffer:rate:size(movingAve3,3)
-                      fig = figure('visible','off');
+            
+            time = datenum(timeCube3(s,:));
+            UNow = interp1(dnUTC_AQ, U_surface, time);
+            VNow = interp1(dnUTC_AQ, V_surface,time);
+            vMag = sqrt(UNow^2 + VNow^2);
+            
+            fig = figure('visible','off');
             fig.PaperUnits = 'inches';
             fig.PaperPosition = [0 0 12 6];
 
@@ -346,6 +376,8 @@ for i = 1:length(cubeList)
             hold on
             plot(xJMC(1:3),yJMC(1:3),'b.','MarkerSize',20)
             plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
+            arrow([xJMC(2) yJMC(2)],[(UNow*1000+xJMC(2)) (VNow*1000+yJMC(2))],...
+                'Length',7,'Width',30*vMag,'tipangle',30,'facecolor','white','edgecolor','white');
 %             plot(xOcC,yOcC,'g.','MarkerSize',20)
             colormap(sub1,hot)
 %             colorbar
@@ -456,7 +488,12 @@ for i = 1:length(cubeList)
         [xOcC,yOcC] = pol2cart(thOcC,rgOc);
         
         for rr = 1:round((size(timeInt,2)/10))
-                        fig = figure('visible','off');
+            time = datenum(timeCube1(s,:));
+            UNow = interp1(dnUTC_AQ, U_surface, time);
+            VNow = interp1(dnUTC_AQ, V_surface,time);
+            vMag = sqrt(UNow^2 + VNow^2);
+            
+            fig = figure('visible','off');
             fig.PaperUnits = 'inches';
             fig.PaperPosition = [0 0 12 6];
 
@@ -468,6 +505,8 @@ for i = 1:length(cubeList)
             plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
 %             plot(xOcC,yOcC,'g.','MarkerSize',20)
             colormap(sub1,hot)
+            arrow([xJMC(2) yJMC(2)],[(UNow*1000+xJMC(2)) (VNow*1000+yJMC(2))],...
+                'Length',7,'Width',20*vMag,'tipangle',20,'facecolor','white','edgecolor','white');
 %             colorbar
             caxis([colorAxisLimits(1) colorAxisLimits(2)])
             axis([XYLimits(1,1) XYLimits(1,2) XYLimits(2,1) XYLimits(2,2)])
@@ -576,6 +615,11 @@ for i = 1:length(cubeList)
         [xOcC,yOcC] = pol2cart(thOcC,rgOc);
         
         for rr = 1:6
+            time = t_dn;
+            UNow = interp1(dnUTC_AQ, U_surface, time);
+            VNow = interp1(dnUTC_AQ, V_surface,time);
+            vMag = sqrt(UNow^2 + VNow^2);
+            
             fig = figure('visible','off');
             fig.PaperUnits = 'inches';
             fig.PaperPosition = [0 0 12 6];
@@ -586,6 +630,8 @@ for i = 1:length(cubeList)
             hold on
             plot(xJMC(1:3),yJMC(1:3),'b.','MarkerSize',20)
             plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
+            arrow([xJMC(2) yJMC(2)],[(UNow*1000+xJMC(2)) (VNow*1000+yJMC(2))],...
+                'Length',7,'Width',30*vMag,'tipangle',30,'facecolor','white','edgecolor','white');
 %             plot(xOcC,yOcC,'g.','MarkerSize',20)
             colormap(sub1,hot)
 %             colorbar
@@ -639,7 +685,7 @@ for i = 1:length(cubeList)
             clear ttl ttlFig
         end
     end
-    clear Azi Rg results data timex timeInt t_dv t_dn tC timeCube1 timeCube2 timeCube3 s
+    clear Azi Rg results data timex timeInt t_dv t_dn tC timeCube1 timeCube2 timeCube3 s UNow VNow time
 end
 
 % % make movie

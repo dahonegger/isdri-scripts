@@ -12,7 +12,7 @@ addpath(genpath('C:\Data\ISDRI\isdri-scripts')) %github repository
 
 % add path to mat files and choose directory for png's
 baseDir = [Hub 'guadalupe\processed\'];
-saveDir = [Hub 'guadalupe\postprocessed\alongshoreTransectMatrix\all\'];
+saveDir = [Hub 'guadalupe\postprocessed\alongshoreTransectMatrix\all_1000\'];
 
 %% Prep files
 % make save directory
@@ -31,7 +31,7 @@ txDn = [];
 idxMaxI = [];
 
 % set up domain
-yC = -800:800;
+yC = -1000:1000;
 xC = -1100:-500;
 xCutoff = 1168;
 domainRotation = 13;

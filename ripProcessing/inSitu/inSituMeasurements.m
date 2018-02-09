@@ -109,14 +109,16 @@ dvUTC_AQ = datevec(dnUTC_AQ);
 clear t
 
 %% Rotate velocities into local coordinate system
-rot = -13;
+rot = 13;
 R = [cosd(rot) -sind(rot); sind(rot) cosd(rot)];
+U = zeros(size(Ue));
+V = zeros(size(Un));
 
 for i = 1:size(Ue,2)
-    velocity = [Ue(:,i) Un(:,i)];
-    velR = velocity*R;
-    U(:,i) = velR(:,1);
-    V(:,i) = velR(:,2);
+    velocity = [Ue(:,i)';Un(:,i)'];
+    velR = R*velocity;
+    U(:,i) = velR(1,:);
+    V(:,i) = velR(2,:);
 end
 
 %% plot radar image
