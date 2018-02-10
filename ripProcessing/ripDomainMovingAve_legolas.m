@@ -64,7 +64,7 @@ imgNum = 1;
 for i = 1:length(cubeList)
     % Load radar data
     
-    cubeName = [cubeList(i).folder '\' cubeList(i).name];
+    cubeName = [cubeList(i).folder '/' cubeList(i).name];
     load(cubeName,'timeInt')
     if size(timeInt,2) > 512
         load(cubeName,'Azi','Rg','results','data','timeInt')
@@ -178,7 +178,7 @@ for i = 1:length(cubeList)
                 ':' num2str(round(timeCube1(s,6)),'%02i') ' UTC'];
             title(ttl)
             xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
-            ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
+            ttlFig = sprintf('%s%s%04i',saveFolder,'/Img_',imgNum);
             imgNum=imgNum+1;
             print(fig,ttlFig,'-dpng')
             close all
@@ -203,7 +203,7 @@ for i = 1:length(cubeList)
                 ':' num2str(round(timeCube2(s,6)),'%02i') ' UTC'];
             title(ttl)
             xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
-            ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
+            ttlFig = sprintf('%s%s%04i',saveFolder,'/Img_',imgNum);
             imgNum=imgNum+1;
             print(fig,ttlFig,'-dpng')
             close all
@@ -228,7 +228,7 @@ for i = 1:length(cubeList)
                 ':' num2str(round(timeCube3(s,6)),'%02i') ' UTC'];
             title(ttl)
             xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
-            ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
+            ttlFig = sprintf('%s%s%04i',saveFolder,'/Img_',imgNum);
             imgNum=imgNum+1;
             print(fig,ttlFig,'-dpng')
             close all
@@ -320,7 +320,7 @@ for i = 1:length(cubeList)
                 ':' num2str(round(t_dv(s,6)),'%02i') ' UTC'];
             title(ttl)            
             xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
-            ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
+            ttlFig = sprintf('%s%s%04i',saveFolder,'/Img_',imgNum);
             imgNum=imgNum+1;
             print(fig,ttlFig,'-dpng')
             close all
@@ -402,7 +402,7 @@ for i = 1:length(cubeList)
                 ':' num2str(round(t_dv(6)),'%02i') ' UTC'];
             title(ttl)
             xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
-            ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
+            ttlFig = sprintf('%s%s%04i',saveFolder,'/Img_',imgNum);
             imgNum=imgNum+1;
             print(fig,ttlFig,'-dpng')
             close all
@@ -495,9 +495,9 @@ for i = 1:length(cubeList)
 end
 
 % % make movie
-% dataFolder = [Hub ':\guadalupe\processed\' startTime(1:4) '-' startTime(5:6)...
+% dataFolder = [Hub ':/guadalupe/processed/' startTime(1:4) '-' startTime(5:6)...
 %     '-' startTime(7:8)];
-% saveFolder = 'C:\Data\ISDRI\postprocessed\ripVideos\';
-% saveFolderGif = [Hub ':\gifs'];
+% saveFolder = 'C:/Data/ISDRI/postprocessed/ripVideos/';
+% saveFolderGif = [Hub ':/gifs'];
 
 % makeRipMovie(startTime, endTime, dataFolder, saveFolder, saveFolderGif)
