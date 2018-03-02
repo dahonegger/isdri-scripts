@@ -3,10 +3,11 @@
 clear variables; home
 
 addpath(genpath('C:\Data\ISDRI\isdri-scripts'));
+addpath(genpath('C:\Data\ISDRI\cBathy'));
 
 %% define time of interest
-startTime = '20171020_1530';
-endTime = '20171020_1930';
+startTime = '20171020_1430';
+endTime = '20171020_2030';
 
 Hub = 'E';
 baseDir = [Hub ':\purisima\processed\'];
@@ -16,7 +17,7 @@ mkdir(saveFolder)
 
 %% define figure parameters
 colorAxisLimits = [75 170];
-XYLimits = [2000 8000; -8000 8000];
+XYLimits = [707 720 3842 3856];
 
 %% make list of cubes
 dataFolder = [baseDir startTime(1:4) '-' startTime(5:6)...
@@ -65,8 +66,6 @@ for i = 1:length(cubeList)
     
     % define time vector
     timeVec = mean(timeInt);
-    t_dn = epoch2Matlab(timeVec);
-    t_dv = datevec(t_dn);
     
     % Convert to world coordinates
     [AZI,RG] = meshgrid(Azi,Rg);
@@ -78,7 +77,7 @@ for i = 1:length(cubeList)
     ii = 1;
     if size(data,3) == 64
         timexCell{1} = mean(data,3);
-        timeIntCell{1} = mean(timeInt);
+        timeIntCell{1} = mean(timeInt(1,:));
     elseif size(data,3) > 64*2
         for i = 1:64:(floor(size(data,3)/64))*64 - 64
             timexCell{ii} = double(mean(data(:,:,i:i+64),3));
@@ -99,10 +98,11 @@ for i = 1:length(cubeList)
     for IMAGEINDEX = 1:numel(timexCell)
         timex = timexCell{IMAGEINDEX}';
         timeInt = timeIntCell{IMAGEINDEX};
+        t_dv = datevec(epoch2Matlab(timeInt));
         
         fig = figure('visible','off');
         fig.PaperUnits = 'inches';
-        fig.PaperPosition = [0 0 8 8];
+        fig.PaperPosition = [0 0 6 6];
         pcolor(xdom/1000,ydom/1000,timex');
         hold on
         plot(UTME/1000,UTMN/1000,'b*')
@@ -110,16 +110,15 @@ for i = 1:length(cubeList)
         axis image
         colormap(hot)
         caxis(colorAxisLimits)
+        axis(XYLimits)
         xlabel('Eastings (km)');ylabel('Northings (km)');
-        ttl = sprintf('%d%02i%d%s%d%s%02i%s%02i', t_dv(1), t_dv(2), t_dv(3), ' - ',...
-            t_dv(4), ':', t_dv(5), ':', round(t_dv(6)));
+        ttl = sprintf('%d%02i%d%s%d%s%02i%s%02i%s', t_dv(1), t_dv(2), t_dv(3), ' - ',...
+            t_dv(4), ':', t_dv(5), ':', round(t_dv(6)), ' UTC');
         title(ttl)
         ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
         imgNum=imgNum+1;
         print(fig,ttlFig,'-dpng')
-        
-        imgNum=imgNum+1;
-        print(fig,ttlFig,'-dpng')
+
         close all
         clear ttl ttlFig
     end
