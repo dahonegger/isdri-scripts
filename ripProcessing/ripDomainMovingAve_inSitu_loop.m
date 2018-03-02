@@ -7,12 +7,15 @@ addpath(genpath('C:\Data\ISDRI\isdri-scripts'));
 addpath(genpath('C:\Data\ISDRI\cBathy'));
 
 %% define time of interest
-startTime = {'20171002_1600'};
-endTime = {'20171002_2230'};
+startTimeAll = {'20170908_1630','20171002_1600'};
+endTimeAll = {'20170908_2355','20171002_2230'};
 
 Hub = 'E';
 baseDir = [Hub ':\guadalupe\processed\'];
 
+for date = 1:length(startTimeAll);
+    startTime = startTimeAll{date};
+    endTime = endTimeAll{date};
 saveFolder = ['E:\guadalupe\postprocessed\ripVideos\temperatureProfiles\' startTime '-' endTime];
 mkdir(saveFolder)
 
@@ -240,7 +243,7 @@ for i = 1:length(cubeList)
             plot(xJMC(1:3),yJMC(1:3),'b.','MarkerSize',20)
             plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
             arrow([xJMC(2) yJMC(2)],[(UNow*1000+xJMC(2)) (VNow*1000+yJMC(2))],...
-                'Length',3,'Width',15*vMag,'tipangle',20,'facecolor','white','edgecolor','white');
+                'Length',3,'Width',13*vMag,'tipangle',25,'facecolor','white','edgecolor','white');
             colormap(sub1,hot)
             %             colorbar
             caxis([colorAxisLimits(1) colorAxisLimits(2)])
@@ -308,7 +311,7 @@ for i = 1:length(cubeList)
             plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
             %             plot(xOcC,yOcC,'g.','MarkerSize',20)
             arrow([xJMC(2) yJMC(2)],[(UNow*1000+xJMC(2)) (VNow*1000+yJMC(2))],...
-                'Length',3,'Width',15*vMag,'tipangle',20,'facecolor','white','edgecolor','white');
+                'Length',3,'Width',13*vMag,'tipangle',25,'facecolor','white','edgecolor','white');
             colormap(sub1,hot)
             %             colorbar
             caxis([colorAxisLimits(1) colorAxisLimits(2)])
@@ -376,7 +379,7 @@ for i = 1:length(cubeList)
             plot(xJMC(1:3),yJMC(1:3),'b.','MarkerSize',20)
             plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
             arrow([xJMC(2) yJMC(2)],[(UNow*1000+xJMC(2)) (VNow*1000+yJMC(2))],...
-                'Length',3,'Width',15*vMag,'tipangle',20,'facecolor','white','edgecolor','white');
+                'Length',3,'Width',13*vMag,'tipangle',25,'facecolor','white','edgecolor','white');
             colormap(sub1,hot)
             %             colorbar
             caxis([colorAxisLimits(1) colorAxisLimits(2)])
@@ -512,7 +515,7 @@ for i = 1:length(cubeList)
             plot(xJMC(1:3),yJMC(1:3),'b.','MarkerSize',20)
             plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
             arrow([xJMC(2) yJMC(2)],[(UNow*1000+xJMC(2)) (VNow*1000+yJMC(2))],...
-                'Length',3,'Width',15*vMag,'tipangle',20,'facecolor','white','edgecolor','white');
+                'Length',3,'Width',13*vMag,'tipangle',25,'facecolor','white','edgecolor','white');
             colormap(sub1,hot)
             %             colorbar
             caxis([colorAxisLimits(1) colorAxisLimits(2)])
@@ -638,7 +641,7 @@ for i = 1:length(cubeList)
             %             plot(xOcC,yOcC,'g.','MarkerSize',20)
             colormap(sub1,hot)
             arrow([xJMC(2) yJMC(2)],[(UNow*1000+xJMC(2)) (VNow*1000+yJMC(2))],...
-                'Length',3,'Width',15*vMag,'tipangle',20,'facecolor','white','edgecolor','white');
+                'Length',3,'Width',13*vMag,'tipangle',25,'facecolor','white','edgecolor','white');
             %             colorbar
             caxis([colorAxisLimits(1) colorAxisLimits(2)])
             axis([XYLimits(1,1) XYLimits(1,2) XYLimits(2,1) XYLimits(2,2)])
@@ -763,7 +766,7 @@ for i = 1:length(cubeList)
             plot(xJMC(1:3),yJMC(1:3),'b.','MarkerSize',20)
             plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
             arrow([xJMC(2) yJMC(2)],[(UNow*1000+xJMC(2)) (VNow*1000+yJMC(2))],...
-                'Length',3,'Width',15*vMag,'tipangle',20,'facecolor','white','edgecolor','white');
+                'Length',3,'Width',13*vMag,'tipangle',25,'facecolor','white','edgecolor','white');
             colormap(sub1,hot)
             %             colorbar
             caxis([colorAxisLimits(1) colorAxisLimits(2)])
@@ -817,6 +820,8 @@ for i = 1:length(cubeList)
         end
     end
     clear Azi Rg results data timex timeInt t_dv t_dn tC timeCube1 timeCube2 timeCube3 s UNow VNow time
+    clear startTime endTime
+end
 end
 
 % % make movie

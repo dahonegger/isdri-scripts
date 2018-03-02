@@ -131,7 +131,7 @@ hold on
 % plot(dn, tooBright,'-g','linewidth',2)
 % plot(dn,ripVec,'g.');
 % plot(dn,ripVec2,'r.');
-% plot(dn,tides_dnrips_Guadalupe,'r','Linewidth',1.5)
+plot(dn,tides_dnrips_Guadalupe,'r','Linewidth',1.5)
 axis([datenum([2017,9,7,0,0,0]) datenum([2017,10,26,0,0,0]) -0.1 2])
 datetick('x','keeplimits')
 ylabel('WL (m)')
