@@ -10,8 +10,8 @@ addpath(genpath('C:\Data\ISDRI\isdri-scripts'));
 addpath(genpath('C:\Data\ISDRI\cBathy'));
 
 %% define time period of interest
-startTime = '20170907_2000';
-endTime = '20170908_2200';
+startTime = '20170907_0000';       % start on 20h
+endTime = '20170909_0000';         % end on 22h
 Hub = 'E';
 baseDir = [Hub ':\guadalupe\processed\'];
 
@@ -19,8 +19,8 @@ saveFolder = [Hub ':\guadalupe\postprocessed\inSitu\OceanoNPS\' startTime '-' en
 mkdir(saveFolder)
 
 %% define figure parameters
-colorAxisLimits = [20 220];
-XYLimits = [-6000 0; -6000 6000];
+colorAxisLimits = [20 180];
+XYLimits = [-8500 0; -7000 7000];
 % XYLimits = [-1500 -500; -1000 1000];
 
 %% load variables
@@ -65,23 +65,23 @@ lat17 = OC17.lat;
 lon17 = OC17.lon;
 zBed17 = OC17.mab; % meters above bed
 
-tOC32 = OC17.dn;
-tempOC32 = OC17.temp;
-lat32 = OC17.lat;
-lon32 = OC17.lon;
-zBed32 = OC17.mab; % meters above bed
+tOC32 = OC32.dn;
+tempOC32 = OC32.temp;
+lat32 = OC32.lat;
+lon32 = OC32.lon;
+zBed32 = OC32.mab; % meters above bed
 
-tOC50 = OC17.dn;
-tempOC50 = OC17.temp;
-lat50 = OC17.lat;
-lon50 = OC17.lon;
-zBed50 = OC17.mab; % meters above bed
+tOC50 = OC50.dn;
+tempOC50 = OC50.temp;
+lat50 = OC50.lat;
+lon50 = OC50.lon;
+zBed50 = OC50.mab; % meters above bed
 clear OC17 OC32 OC50
 
 %% Redefine time vectors in UTC
 dvPDT_AQ = datevec(t);    % tA tB tC and tE are the same
-dvUTC_AQ = dvPDT_AQ; 
-dvUTC_AQ(:,4) = dvPDT_AQ(:,4)+7;  % add 7 hours to convert from PDT to UTC   
+dvUTC_AQ = dvPDT_AQ;
+dvUTC_AQ(:,4) = dvPDT_AQ(:,4)+7;  % add 7 hours to convert from PDT to UTC
 dnUTC_AQ = datenum(dvUTC_AQ);
 dvUTC_AQ = datevec(dnUTC_AQ);
 
@@ -138,702 +138,225 @@ tempLimits(2) = max(max(tempB(:,idxTChain)));
 [~,lastFileIndex] = min(abs(enddn - dnList));
 
 cubeList = cubeListAll(firstFileIndex:lastFileIndex);
+cubeName1 = [cubeList(1).folder '\' cubeList(1).name];
+load(cubeName1,'timeInt')
+timeInt1 = epoch2Matlab(mean(timeInt(1,:)));
+cubeNameEnd = [cubeList(end).folder '\' cubeList(end).name];
+load(cubeNameEnd,'timeInt')
+timeIntEnd = epoch2Matlab(mean(timeInt(1,:)));
 
 %% Load data from 512 rotation runs
-xCutoff = 1068; % range index for clipped scan
-rotation = 0; % domain rotation
-imgNum = 1;
-for i = 1:length(cubeList)
+rotation = 13; % domain rotation
+imgNum = 1240;
+for iCube = 970:length(cubeList)
     % Load radar data
     
-    cubeName = [cubeList(i).folder '\' cubeList(i).name];
-    load(cubeName,'timeInt')
-    if size(timeInt,2) > 512
+    cubeName = [cubeList(iCube).folder '\' cubeList(iCube).name];
+    load(cubeName,'timeInt','results','Azi','Rg')
+    
+    % Handle long runs (e.g. 18 minutes
+    ii = 1;
+    if size(timeInt,2) == 64
+        if ~exist('timex','var') || isempty(timex)
+            load(cubeName,'data','results')
+            timex = double(nanmean(data,3));
+        else
+        end
+        timexCell{1} = timex;
+        timeIntCell{1} = mean(timeInt);
+        %     pngFileCell{1} = pngFile;
+        clear timex
+    elseif size(timeInt,2) > 64*2
         load(cubeName,'Azi','Rg','results','data','timeInt')
-        
-        % define time vector
-        timeVec = mean(timeInt);
-        t_dn = epoch2Matlab(timeVec);
-        t_dv = datevec(t_dn);
-        
-        % set rotation(so shoreline is parallel to edge of plot)
-        heading = results.heading-rotation;
-        [AZI,RG] = meshgrid(Azi,Rg(16:xCutoff));
-        
-        % interpolate onto a smaller cartesian grid
-        xC = XYLimits(2,1):XYLimits(2,2);
-        yC = XYLimits(1,1):XYLimits(1,2);
-        [XX,YY] = meshgrid(yC,xC);
-        [thC,rgC] = cart2pol(XX,YY);
-        aziC = wrapTo360(90 - thC*180/pi - heading);
-        
-        % cut cube into 3 to make it easier to use
-        c3 = round(size(data,3)/3);
-        buffer = 45;
-        cube1 = data(:,:,(1:c3+buffer));
-        cube2 = data(:,:,(c3-buffer):(2*c3+buffer));
-        cube3 = data(:,:,(2*c3-buffer):end);
-        timeCube1 = t_dv((1:c3+buffer),:);
-        timeCube2 = t_dv((c3-buffer):(2*c3+buffer),:);
-        timeCube3 = t_dv((2*c3-buffer):end,:);
-        tC1 = zeros(length(xC),length(yC),size(cube1,3));
-        tC2 = zeros(length(xC),length(yC),size(cube2,3));
-        tC3 = zeros(length(xC),length(yC),size(cube3,3));
-        for rot = 1:size(cube1,3)
-            scanClipped = (double(cube1(16:xCutoff,:,rot)));
-            tCR = interp2(AZI,RG,scanClipped,aziC',rgC');
-            tC1(:,:,rot) = tCR';
-            clear tCR scanClipped
+        for iRot = 1:64:(floor(size(data,3)/64))*64 - 64
+            timexCell{ii} = double(mean(data(:,:,iRot:iRot+64),3));
+            timeIntCell{ii} = timeInt(1,iRot:iRot+64);
+            %         [path,fname,ext] = fileparts(pngFile);
+            %         tmp = datestr(epoch2Matlab(mean(timeIntCell{ii})),'HHMM');
+            %         fname = [fname(1:17),tmp,'_pol_timex'];
+            %         pngFileCell{ii} = fullfile(path,[fname,ext]);
+            
+            ii = ii+1;
         end
-        for rot = 1:size(cube2,3)
-            scanClipped = (double(cube2(16:xCutoff,:,rot)));
-            tCR = interp2(AZI,RG,scanClipped,aziC',rgC');
-            tC2(:,:,rot) = tCR';
-            clear tCR scanClipped
-        end
-        for rot = 1:size(cube3,3)
-            scanClipped = (double(cube3(16:xCutoff,:,rot)));
-            tCR = interp2(AZI,RG,scanClipped,aziC',rgC');
-            tC3(:,:,rot) = tCR';
-            clear tCR scanClipped
-        end
-        
-        % run 2 minute moving average
-        movingAve1 = movmean(tC1,96,3);
-        movingAve2 = movmean(tC2,96,3);
-        movingAve3 = movmean(tC3,96,3);
-        rate = 8;
-        
-        % add MacMahan's instruments
-        % find coordinates of MacMahan instruments
-        latJM = [34.9826 34.981519 34.981131 34.980439 34.98035 34.985969];
-        lonJM = [-120.657311 -120.651639 -120.650239 -120.647881...
-            -120.651719 -120.650319];
-        
-        [yUTM_JM, xUTM_JM] = ll2UTM(latJM,lonJM);
-        X_JM = xUTM_JM - results.XOrigin;
-        Y_JM = yUTM_JM - results.YOrigin;
-        
-        % rotate onto the same grid
-        [thJM,rgJM] = cart2pol(X_JM,Y_JM);
-        aziJM = wrapTo360(-thJM*180/pi + 90 - results.heading);
-        aziJMC = aziJM - rotation;
-        thJMC = pi/180*(90 - aziJMC - results.heading);
-        [xJMC,yJMC] = pol2cart(thJMC,rgJM);
-        
-        % add Oceanus instruments
-        % find coordinates of Oceanus instruments
-        latOc = [35.004242 35.004128 34.985083 35.005967 34.995867 35.0207...
-            35.01995 35.007617 35.00715 34.9974 34.996933 34.9864 34.986...
-            34.97535 34.974817];
-        lonOc = [-120.646192 -120.646586 -120.662117 -120.655367 -120.661517...
-            -120.6637 -120.664483 -120.668 -120.667917 -120.669533 -120.669667...
-            -120.67275 -120.672967 -120.675533 -120.67555];
-        [yUTM_Oc, xUTM_Oc] = ll2UTM(latOc,lonOc);
-        X_Oc = xUTM_Oc - results.XOrigin;
-        Y_Oc = yUTM_Oc - results.YOrigin;
-        
-        % rotate onto the same grid
-        [thOc,rgOc] = cart2pol(X_Oc,Y_Oc);
-        aziOc = wrapTo360(-thOc*180/pi + 90 - results.heading);
-        aziOcC = aziOc - rotation;
-        thOcC = pi/180*(90 - aziOcC - results.heading);
-        [xOcC,yOcC] = pol2cart(thOcC,rgOc);
-        
-        
-        % make .pngs
-        for s = 1:rate:c3
-            time = datenum(timeCube1(s,:));
-            UNow = interp1(dnUTC_AQ, U_surface, time);
-            VNow = interp1(dnUTC_AQ, V_surface,time);
-            vMag = sqrt(UNow^2 + VNow^2);
+    elseif size(timeInt,2) > 64 && size(timeInt,2) <= 64*2
+        load(cubeFile,'data','results','Azi','Rg')
+        for iRot = 1:64:(floor(size(data,3)/64))*64    
+            timexCell{ii} = double(mean(data(:,:,iRot:iRot+64),3));
+            timeIntCell{ii} = timeInt(1,iRot:iRot+64);
+            %         [path,fname,ext] = fileparts(pngFile);
+            %         tmp = datestr(epoch2Matlab(mean(timeIntCell{ii})),'HHMM');
+            %         fname = [fname(1:17),tmp,'_pol_timex'];
+            %         pngFileCell{ii} = fullfile(path,[fname,ext]);
             
-            fig = figure('visible','off');
-            fig.PaperUnits = 'inches';
-            fig.PaperPosition = [0 0 12 6];
-            
-            sub1 = subplot(2,3, [1 4]);
-            pcolor(XX,YY,movingAve1(:,:,s))
-            shading interp; axis image
-            hold on
-            plot(xJMC(1:3),yJMC(1:3),'b.','MarkerSize',20)
-            plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
-            arrow([xJMC(2) yJMC(2)],[(UNow*1000+xJMC(2)) (VNow*1000+yJMC(2))],...
-                'Length',3,'Width',15*vMag,'tipangle',20,'facecolor','white','edgecolor','white');
-            colormap(sub1,hot)
-            %             colorbar
-            caxis([colorAxisLimits(1) colorAxisLimits(2)])
-            axis([XYLimits(1,1) XYLimits(1,2) XYLimits(2,1) XYLimits(2,2)])
-            ttl = [num2str(timeCube1(s,1)) num2str(timeCube1(s,2),'%02i') num2str(timeCube1(s,3),'%02i') ' - ',...
-                num2str(timeCube1(s,4),'%02i') ':', num2str(timeCube1(s,5),'%02i')...
-                ':' num2str(round(timeCube1(s,6)),'%02i') ' UTC'];
-            title(ttl)
-            xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
-            ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
-            
-            sub2 = subplot(2,3,[2 3]);
-            pcolor(dnUTC_AQ(idxAQ),ZBed,Ubave(idxAQ,:)')
-            shading flat; colorbar; colormap(sub2, cMap)
-            caxis([-0.4 0.4])
-            axis([dnUTC_AQ(idxAQ(1)) dnUTC_AQ(idxAQ(end)) 1 11])
-            datetick('x','keeplimits')
-            y1 = get(gca,'ylim');
-            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
-            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 11])
-            xlabel('Time'); ylabel('Distance above bed (m)');
-            ttlU = ['U velocity at STRING B'];
-            title(ttlU)
-            
-            timeMat = repmat(dnUTC(idxTChain),[1,length(zBedB)]);
-            sub3 = subplot(2,3,[5 6]);
-            pcolor(timeMat',zBedB_All(idxTChain,:)',tempB(:,idxTChain))
-            shading flat; hcb =colorbar;
-            colormap(sub3, parula);
-            hold on
-            %             pcolor(dnUTC(idxTChain),depth_tchain,tempB(1,idxTChain))
-            % plot(dnUTC_AQ(idxAQ),(depth(idxAQ)-mean(depth(idxAQ))+4),'r')
-            % plot(dnTides(idxTides),(WL(idxTides)-mean(WL(idxTides))+4),'y')
-            caxis(tempLimits)
-            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 max(depth)])
-            datetick('x','keeplimits')
-            y1 = get(gca,'ylim');
-            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
-            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 9])
-            xlabel('Time'); ylabel('Distance above bed (m)');
-            ttlC = ['Temperature at STRING B'];
-            title(ttlC)
-            xlabel(hcb,'Temperature C')
-            
-            imgNum=imgNum+1;
-            print(fig,ttlFig,'-dpng')
-            close all
-            clear ttl ttlFig
-        end
-        for s = (buffer+2):rate:(size(cube2,3) - buffer - 2);
-            time = datenum(timeCube2(s,:));
-            UNow = interp1(dnUTC_AQ, U_surface, time);
-            VNow = interp1(dnUTC_AQ, V_surface,time);
-            vMag = sqrt(UNow^2 + VNow^2);
-            
-            fig = figure('visible','off');
-            fig.PaperUnits = 'inches';
-            fig.PaperPosition = [0 0 12 6];
-            
-            sub1 = subplot(2,3, [1 4]);
-            pcolor(XX,YY,movingAve2(:,:,s))
-            shading interp; axis image
-            hold on
-            plot(xJMC(1:3),yJMC(1:3),'b.','MarkerSize',20)
-            plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
-            %             plot(xOcC,yOcC,'g.','MarkerSize',20)
-            arrow([xJMC(2) yJMC(2)],[(UNow*1000+xJMC(2)) (VNow*1000+yJMC(2))],...
-                'Length',3,'Width',15*vMag,'tipangle',20,'facecolor','white','edgecolor','white');
-            colormap(sub1,hot)
-            %             colorbar
-            caxis([colorAxisLimits(1) colorAxisLimits(2)])
-            axis([XYLimits(1,1) XYLimits(1,2) XYLimits(2,1) XYLimits(2,2)])
-            ttl = [num2str(timeCube2(s,1)) num2str(timeCube2(s,2),'%02i') num2str(timeCube2(s,3),'%02i') ' - ',...
-                num2str(timeCube2(s,4),'%02i') ':', num2str(timeCube2(s,5),'%02i')...
-                ':' num2str(round(timeCube2(s,6)),'%02i') ' UTC'];
-            title(ttl)
-            xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
-            ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
-            
-            time = datenum(timeCube2(s,:));
-            sub2 = subplot(2,3,[2 3]);
-            pcolor(dnUTC_AQ(idxAQ),ZBed,Ubave(idxAQ,:)')
-            shading flat; colorbar; colormap(sub2, cMap)
-            caxis([-0.4 0.4])
-            axis([dnUTC_AQ(idxAQ(1)) dnUTC_AQ(idxAQ(end)) 1 11])
-            datetick('x','keeplimits')
-            y1 = get(gca,'ylim');
-            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
-            xlabel('Time'); ylabel('Distance above bed (m)');
-            ttlU = ['U velocity at STRING B'];
-            title(ttlU)
-            
-            timeMat = repmat(dnUTC(idxTChain),[1,length(zBedB)]);
-            sub3 = subplot(2,3,[5 6]);
-            pcolor(timeMat',zBedB_All(idxTChain,:)',tempB(:,idxTChain))
-            shading flat; hcb =colorbar;
-            colormap(sub3, parula);
-            hold on
-            %             pcolor(dnUTC(idxTChain),depth_tchain,tempB(1,idxTChain))
-            % plot(dnUTC_AQ(idxAQ),(depth(idxAQ)-mean(depth(idxAQ))+4),'r')
-            % plot(dnTides(idxTides),(WL(idxTides)-mean(WL(idxTides))+4),'y')
-            caxis(tempLimits)
-            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 max(depth)])
-            datetick('x','keeplimits')
-            y1 = get(gca,'ylim');
-            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
-            xlabel('Time'); ylabel('Distance above bed (m)');
-            ttlC = ['Temperature at STRING B'];
-            title(ttlC)
-            xlabel(hcb,'Temperature C')
-            
-            ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
-            imgNum=imgNum+1;
-            print(fig,ttlFig,'-dpng')
-            close all
-            clear ttl ttlFig
-        end
-        for s = buffer:rate:size(movingAve3,3)
-            
-            time = datenum(timeCube3(s,:));
-            UNow = interp1(dnUTC_AQ, U_surface, time);
-            VNow = interp1(dnUTC_AQ, V_surface,time);
-            vMag = sqrt(UNow^2 + VNow^2);
-            
-            fig = figure('visible','off');
-            fig.PaperUnits = 'inches';
-            fig.PaperPosition = [0 0 12 6];
-            
-            sub1 = subplot(2,3, [1 4]);
-            pcolor(XX,YY,movingAve3(:,:,s))
-            shading interp; axis image
-            hold on
-            plot(xJMC(1:3),yJMC(1:3),'b.','MarkerSize',20)
-            plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
-            arrow([xJMC(2) yJMC(2)],[(UNow*1000+xJMC(2)) (VNow*1000+yJMC(2))],...
-                'Length',3,'Width',15*vMag,'tipangle',20,'facecolor','white','edgecolor','white');
-            colormap(sub1,hot)
-            %             colorbar
-            caxis([colorAxisLimits(1) colorAxisLimits(2)])
-            axis([XYLimits(1,1) XYLimits(1,2) XYLimits(2,1) XYLimits(2,2)])
-            ttl = [num2str(timeCube3(s,1)) num2str(timeCube3(s,2),'%02i') num2str(timeCube3(s,3),'%02i') ' - ',...
-                num2str(timeCube3(s,4),'%02i') ':', num2str(timeCube3(s,5),'%02i')...
-                ':' num2str(round(timeCube3(s,6)),'%02i') ' UTC'];
-            title(ttl)
-            xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
-            ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
-            
-            time = datenum(timeCube3(s,:));
-            sub2 = subplot(2,3,[2 3]);
-            pcolor(dnUTC_AQ(idxAQ),ZBed,Ubave(idxAQ,:)')
-            shading flat; colorbar; colormap(sub2, cMap)
-            caxis([-0.4 0.4])
-            axis([dnUTC_AQ(idxAQ(1)) dnUTC_AQ(idxAQ(end)) 1 11])
-            datetick('x','keeplimits')
-            y1 = get(gca,'ylim');
-            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
-            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 11])
-            xlabel('Time'); ylabel('Distance above bed (m)');
-            ttlU = ['U velocity at STRING B'];
-            title(ttlU)
-            
-            timeMat = repmat(dnUTC(idxTChain),[1,length(zBedB)]);
-            sub3 = subplot(2,3,[5 6]);
-            pcolor(timeMat',zBedB_All(idxTChain,:)',tempB(:,idxTChain))
-            shading flat; hcb =colorbar;
-            colormap(sub3, parula);
-            hold on
-            %             pcolor(dnUTC(idxTChain),depth_tchain,tempB(1,idxTChain))
-            % plot(dnUTC_AQ(idxAQ),(depth(idxAQ)-mean(depth(idxAQ))+4),'r')
-            % plot(dnTides(idxTides),(WL(idxTides)-mean(WL(idxTides))+4),'y')
-            caxis(tempLimits)
-            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 max(depth)])
-            datetick('x','keeplimits')
-            y1 = get(gca,'ylim');
-            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
-            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 9])
-            xlabel('Time'); ylabel('Distance above bed (m)');
-            ttlC = ['Temperature at STRING B'];
-            title(ttlC)
-            xlabel(hcb,'Temperature C')
-            
-            ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
-            imgNum=imgNum+1;
-            print(fig,ttlFig,'-dpng')
-            close all
-            clear ttl ttlFig
-        end
-    elseif size(timeInt,2) == 512
-        load(cubeName,'Azi','Rg','results','data','timeInt')
-        
-        % define time vector
-        timeVec = mean(timeInt);
-        t_dn = epoch2Matlab(timeVec);
-        t_dv = datevec(t_dn);
-        
-        % set rotation(so shoreline is parallel to edge of plot)
-        heading = results.heading-rotation;
-        [AZI,RG] = meshgrid(Azi,Rg(16:xCutoff));
-        
-        % interpolate onto a smaller cartesian grid
-        xC = XYLimits(2,1):XYLimits(2,2);
-        yC = XYLimits(1,1):XYLimits(1,2);
-        [XX,YY] = meshgrid(yC,xC);
-        [thC,rgC] = cart2pol(XX,YY);
-        aziC = wrapTo360(90 - thC*180/pi - heading);
-        
-        tC = zeros(length(xC),length(yC),512);
-        for rot = 1:512
-            scanClipped = (double(data(16:xCutoff,:,rot)));
-            tCR = interp2(AZI,RG,scanClipped,aziC',rgC');
-            tC(:,:,rot) = tCR';
-        end
-        
-        % run 2 minute moving average
-        movingAve = movmean(tC,96,3);
-        rate = 8;
-        
-        % add MacMahan's instruments
-        % find coordinates of MacMahan instruments
-        latJM = [34.9826 34.981519 34.981131 34.980439 34.98035 34.985969];
-        lonJM = [-120.657311 -120.651639 -120.650239 -120.647881...
-            -120.651719 -120.650319];
-        
-        [yUTM_JM, xUTM_JM] = ll2UTM(latJM,lonJM);
-        X_JM = xUTM_JM - results.XOrigin;
-        Y_JM = yUTM_JM - results.YOrigin;
-        
-        % rotate onto the same grid
-        [thJM,rgJM] = cart2pol(X_JM,Y_JM);
-        aziJM = wrapTo360(-thJM*180/pi + 90 - results.heading);
-        aziJMC = aziJM - rotation;
-        thJMC = pi/180*(90 - aziJMC - results.heading);
-        [xJMC,yJMC] = pol2cart(thJMC,rgJM);
-        
-        % add Oceanus instruments
-        % find coordinates of Oceanus instruments
-        latOc = [35.004242 35.004128 34.985083 35.005967 34.995867 35.0207...
-            35.01995 35.007617 35.00715 34.9974 34.996933 34.9864 34.986...
-            34.97535 34.974817];
-        lonOc = [-120.646192 -120.646586 -120.662117 -120.655367 -120.661517...
-            -120.6637 -120.664483 -120.668 -120.667917 -120.669533 -120.669667...
-            -120.67275 -120.672967 -120.675533 -120.67555];
-        [yUTM_Oc, xUTM_Oc] = ll2UTM(latOc,lonOc);
-        X_Oc = xUTM_Oc - results.XOrigin;
-        Y_Oc = yUTM_Oc - results.YOrigin;
-        
-        % rotate onto the same grid
-        [thOc,rgOc] = cart2pol(X_Oc,Y_Oc);
-        aziOc = wrapTo360(-thOc*180/pi + 90 - results.heading);
-        aziOcC = aziOc - rotation;
-        thOcC = pi/180*(90 - aziOcC - results.heading);
-        [xOcC,yOcC] = pol2cart(thOcC,rgOc);
-        
-        % make .pngs
-        for s = 1:rate:512
-            time = t_dn(s);
-            UNow = interp1(dnUTC_AQ, U_surface, time);
-            VNow = interp1(dnUTC_AQ, V_surface,time);
-            vMag = sqrt(UNow^2 + VNow^2);
-            
-            fig = figure('visible','off');
-            fig.PaperUnits = 'inches';
-            fig.PaperPosition = [0 0 12 6];
-            
-            sub1 = subplot(2,3, [1 4]);
-            pcolor(XX,YY,movingAve(:,:,s))
-            shading interp; axis image
-            hold on
-            plot(xJMC(1:3),yJMC(1:3),'b.','MarkerSize',20)
-            plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
-            arrow([xJMC(2) yJMC(2)],[(UNow*1000+xJMC(2)) (VNow*1000+yJMC(2))],...
-                'Length',3,'Width',15*vMag,'tipangle',20,'facecolor','white','edgecolor','white');
-            colormap(sub1,hot)
-            %             colorbar
-            caxis([colorAxisLimits(1) colorAxisLimits(2)])
-            axis([XYLimits(1,1) XYLimits(1,2) XYLimits(2,1) XYLimits(2,2)])
-            ttl = [num2str(t_dv(s,1)) num2str(t_dv(s,2),'%02i') num2str(t_dv(s,3),'%02i') ' - ',...
-                num2str(t_dv(s,4),'%02i') ':', num2str(t_dv(s,5),'%02i')...
-                ':' num2str(round(t_dv(s,6)),'%02i') ' UTC'];
-            title(ttl)
-            xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
-            ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
-            
-            sub2 = subplot(2,3,[2 3]);
-            pcolor(dnUTC_AQ(idxAQ),ZBed,Ubave(idxAQ,:)')
-            shading flat; colorbar; colormap(sub2, cMap)
-            caxis([-0.4 0.4])
-            axis([dnUTC_AQ(idxAQ(1)) dnUTC_AQ(idxAQ(end)) 1 11])
-            datetick('x','keeplimits')
-            y1 = get(gca,'ylim');
-            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
-            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 11])
-            xlabel('Time'); ylabel('Distance above bed (m)');
-            ttlU = ['U velocity at STRING B'];
-            title(ttlU)
-            
-            timeMat = repmat(dnUTC(idxTChain),[1,length(zBedB)]);
-            sub3 = subplot(2,3,[5 6]);
-            pcolor(timeMat',zBedB_All(idxTChain,:)',tempB(:,idxTChain))
-            shading flat; hcb =colorbar;
-            colormap(sub3, parula);
-            hold on
-            %             pcolor(dnUTC(idxTChain),depth_tchain,tempB(1,idxTChain))
-            % plot(dnUTC_AQ(idxAQ),(depth(idxAQ)-mean(depth(idxAQ))+4),'r')
-            % plot(dnTides(idxTides),(WL(idxTides)-mean(WL(idxTides))+4),'y')
-            caxis(tempLimits)
-            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 max(depth)])
-            datetick('x','keeplimits')
-            y1 = get(gca,'ylim');
-            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
-            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 9])
-            xlabel('Time'); ylabel('Distance above bed (m)');
-            ttlC = ['Temperature at STRING B'];
-            title(ttlC)
-            xlabel(hcb,'Temperature C')
-            
-            imgNum=imgNum+1;
-            print(fig,ttlFig,'-dpng')
-            close all
-            clear ttl ttlFig
-        end
-    elseif size(timeInt,2) > 65 && size(timeInt,2) < 130
-        load(cubeName,'Azi','Rg','results','timex','timeInt')
-        
-        % define time vector
-        timeVec = mean(mean(timeInt));
-        t_dn = epoch2Matlab(timeVec);
-        t_dv = datevec(t_dn);
-        
-        % set up domain
-        heading = results.heading-rotation;
-        [AZI,RG] = meshgrid(Azi,Rg(16:xCutoff));
-        
-        % interpolate onto a smaller cartesian grid
-        xC = XYLimits(2,1):XYLimits(2,2);
-        yC = XYLimits(1,1):XYLimits(1,2);
-        [XX,YY] = meshgrid(yC,xC);
-        [thC,rgC] = cart2pol(XX,YY);
-        aziC = wrapTo360(90 - thC*180/pi - heading);
-        scanClipped = (double(timex(16:xCutoff,:)));
-        tC = interp2(AZI,RG,scanClipped,aziC',rgC');
-        
-        % add MacMahan's instruments
-        % find coordinates of MacMahan instruments
-        latJM = [34.9826 34.981519 34.981131 34.980439 34.98035 34.985969];
-        lonJM = [-120.657311 -120.651639 -120.650239 -120.647881...
-            -120.651719 -120.650319];
-        
-        [yUTM_JM, xUTM_JM] = ll2UTM(latJM,lonJM);
-        X_JM = xUTM_JM - results.XOrigin;
-        Y_JM = yUTM_JM - results.YOrigin;
-        
-        % rotate onto the same grid
-        [thJM,rgJM] = cart2pol(X_JM,Y_JM);
-        aziJM = wrapTo360(-thJM*180/pi + 90 - results.heading);
-        aziJMC = aziJM - rotation;
-        thJMC = pi/180*(90 - aziJMC - results.heading);
-        [xJMC,yJMC] = pol2cart(thJMC,rgJM);
-        
-        % add Oceanus instruments
-        % find coordinates of Oceanus instruments
-        latOc = [35.004242 35.004128 34.985083 35.005967 34.995867 35.0207...
-            35.01995 35.007617 35.00715 34.9974 34.996933 34.9864 34.986...
-            34.97535 34.974817];
-        lonOc = [-120.646192 -120.646586 -120.662117 -120.655367 -120.661517...
-            -120.6637 -120.664483 -120.668 -120.667917 -120.669533 -120.669667...
-            -120.67275 -120.672967 -120.675533 -120.67555];
-        [yUTM_Oc, xUTM_Oc] = ll2UTM(latOc,lonOc);
-        X_Oc = xUTM_Oc - results.XOrigin;
-        Y_Oc = yUTM_Oc - results.YOrigin;
-        
-        % rotate onto the same grid
-        [thOc,rgOc] = cart2pol(X_Oc,Y_Oc);
-        aziOc = wrapTo360(-thOc*180/pi + 90 - results.heading);
-        aziOcC = aziOc - rotation;
-        thOcC = pi/180*(90 - aziOcC - results.heading);
-        [xOcC,yOcC] = pol2cart(thOcC,rgOc);
-        
-        for rr = 1:round((size(timeInt,2)/10))
-            time = datenum(timeCube1(s,:));
-            UNow = interp1(dnUTC_AQ, U_surface, time);
-            VNow = interp1(dnUTC_AQ, V_surface,time);
-            vMag = sqrt(UNow^2 + VNow^2);
-            
-            fig = figure('visible','off');
-            fig.PaperUnits = 'inches';
-            fig.PaperPosition = [0 0 12 6];
-            
-            sub1 = subplot(2,3, [1 4]);
-            pcolor(XX,YY,movingAve1(:,:,s))
-            shading interp; axis image
-            hold on
-            plot(xJMC(1:3),yJMC(1:3),'b.','MarkerSize',20)
-            plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
-            %             plot(xOcC,yOcC,'g.','MarkerSize',20)
-            colormap(sub1,hot)
-            arrow([xJMC(2) yJMC(2)],[(UNow*1000+xJMC(2)) (VNow*1000+yJMC(2))],...
-                'Length',3,'Width',15*vMag,'tipangle',20,'facecolor','white','edgecolor','white');
-            %             colorbar
-            caxis([colorAxisLimits(1) colorAxisLimits(2)])
-            axis([XYLimits(1,1) XYLimits(1,2) XYLimits(2,1) XYLimits(2,2)])
-            ttl = [num2str(timeCube1(s,1)) num2str(timeCube1(s,2),'%02i') num2str(timeCube1(s,3),'%02i') ' - ',...
-                num2str(timeCube1(s,4),'%02i') ':', num2str(timeCube1(s,5),'%02i')...
-                ':' num2str(round(timeCube1(s,6)),'%02i') ' UTC'];
-            title(ttl)
-            xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
-            ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
-            
-            time = datenum(timeCube1(s,:));
-            sub2 = subplot(2,3,[2 3]);
-            pcolor(dnUTC_AQ(idxAQ),ZBed,Ubave(idxAQ,:)')
-            shading flat; colorbar; colormap(sub2, cMap)
-            caxis([-0.4 0.4])
-            axis([dnUTC_AQ(idxAQ(1)) dnUTC_AQ(idxAQ(end)) 1 11])
-            datetick('x','keeplimits')
-            y1 = get(gca,'ylim');
-            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
-            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 11])
-            xlabel('Time'); ylabel('Distance above bed (m)');
-            ttlU = ['U velocity at STRING B'];
-            title(ttlU)
-            
-            timeMat = repmat(dnUTC(idxTChain),[1,length(zBedB)]);
-            sub3 = subplot(2,3,[5 6]);
-            pcolor(timeMat',zBedB_All(idxTChain,:)',tempB(:,idxTChain))
-            shading flat; hcb =colorbar;
-            colormap(sub3, parula);
-            hold on
-            %             pcolor(dnUTC(idxTChain),depth_tchain,tempB(1,idxTChain))
-            % plot(dnUTC_AQ(idxAQ),(depth(idxAQ)-mean(depth(idxAQ))+4),'r')
-            % plot(dnTides(idxTides),(WL(idxTides)-mean(WL(idxTides))+4),'y')
-            caxis(tempLimits)
-            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 max(depth)])
-            datetick('x','keeplimits')
-            y1 = get(gca,'ylim');
-            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
-            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 9])
-            xlabel('Time'); ylabel('Distance above bed (m)');
-            ttlC = ['Temperature at STRING B'];
-            title(ttlC)
-            xlabel(hcb,'Temperature C')
-            
-            ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
-            imgNum=imgNum+1;
-            print(fig,ttlFig,'-dpng')
-            close all
-            clear ttl ttlFig
-        end
-    elseif size(timeInt,2) == 64
-        load(cubeName,'Azi','Rg','results','timex','timeInt')
-        
-        % define time vector
-        timeVec = mean(mean(timeInt));
-        t_dn = epoch2Matlab(timeVec);
-        t_dv = datevec(t_dn);
-        
-        % set up domain
-        heading = results.heading-rotation;
-        [AZI,RG] = meshgrid(Azi,Rg(16:xCutoff));
-        
-        % interpolate onto a smaller cartesian grid
-        xC = XYLimits(2,1):XYLimits(2,2);
-        yC = XYLimits(1,1):XYLimits(1,2);
-        [XX,YY] = meshgrid(yC,xC);
-        [thC,rgC] = cart2pol(XX,YY);
-        aziC = wrapTo360(90 - thC*180/pi - heading);
-        scanClipped = (double(timex(16:xCutoff,:)));
-        tC = interp2(AZI,RG,scanClipped,aziC',rgC');
-        
-        % add MacMahan's instruments
-        % find coordinates of MacMahan instruments
-        latJM = [34.9826 34.981519 34.981131 34.980439 34.98035 34.985969];
-        lonJM = [-120.657311 -120.651639 -120.650239 -120.647881...
-            -120.651719 -120.650319];
-        
-        [yUTM_JM, xUTM_JM] = ll2UTM(latJM,lonJM);
-        X_JM = xUTM_JM - results.XOrigin;
-        Y_JM = yUTM_JM - results.YOrigin;
-        
-        % rotate onto the same grid
-        [thJM,rgJM] = cart2pol(X_JM,Y_JM);
-        aziJM = wrapTo360(-thJM*180/pi + 90 - results.heading);
-        aziJMC = aziJM - rotation;
-        thJMC = pi/180*(90 - aziJMC - results.heading);
-        [xJMC,yJMC] = pol2cart(thJMC,rgJM);
-        
-        % add Oceanus instruments
-        % find coordinates of Oceanus instruments
-        latOc = [35.004242 35.004128 34.985083 35.005967 34.995867 35.0207...
-            35.01995 35.007617 35.00715 34.9974 34.996933 34.9864 34.986...
-            34.97535 34.974817];
-        lonOc = [-120.646192 -120.646586 -120.662117 -120.655367 -120.661517...
-            -120.6637 -120.664483 -120.668 -120.667917 -120.669533 -120.669667...
-            -120.67275 -120.672967 -120.675533 -120.67555];
-        [yUTM_Oc, xUTM_Oc] = ll2UTM(latOc,lonOc);
-        X_Oc = xUTM_Oc - results.XOrigin;
-        Y_Oc = yUTM_Oc - results.YOrigin;
-        
-        % rotate onto the same grid
-        [thOc,rgOc] = cart2pol(X_Oc,Y_Oc);
-        aziOc = wrapTo360(-thOc*180/pi + 90 - results.heading);
-        aziOcC = aziOc - rotation;
-        thOcC = pi/180*(90 - aziOcC - results.heading);
-        [xOcC,yOcC] = pol2cart(thOcC,rgOc);
-        
-        for rr = 1:12
-            time = t_dn;
-            UNow = interp1(dnUTC_AQ, U_surface, time);
-            VNow = interp1(dnUTC_AQ, V_surface,time);
-            vMag = sqrt(UNow^2 + VNow^2);
-            
-            fig = figure('visible','off');
-            fig.PaperUnits = 'inches';
-            fig.PaperPosition = [0 0 12 6];
-            
-            sub1 = subplot(2,3, [1 4]);
-            pcolor(XX,YY,tC')
-            shading interp; axis image
-            hold on
-            plot(xJMC(1:3),yJMC(1:3),'b.','MarkerSize',20)
-            plot(xJMC(5),yJMC(5),'b.','MarkerSize',20)
-            arrow([xJMC(2) yJMC(2)],[(UNow*1000+xJMC(2)) (VNow*1000+yJMC(2))],...
-                'Length',3,'Width',15*vMag,'tipangle',20,'facecolor','white','edgecolor','white');
-            colormap(sub1,hot)
-            %             colorbar
-            caxis([colorAxisLimits(1) colorAxisLimits(2)])
-            axis([XYLimits(1,1) XYLimits(1,2) XYLimits(2,1) XYLimits(2,2)])
-            ttl = [num2str(t_dv(1)) num2str(t_dv(2),'%02i') num2str(t_dv(3),'%02i') ' - ',...
-                num2str(t_dv(4),'%02i') ':', num2str(t_dv(5),'%02i')...
-                ':' num2str(round(t_dv(6)),'%02i') ' UTC'];
-            title(ttl)
-            xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
-            ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
-            
-            time = t_dn;
-            sub2 = subplot(2,3,[2 3]);
-            pcolor(dnUTC_AQ(idxAQ),ZBed,Ubave(idxAQ,:)')
-            shading flat; colorbar; colormap(sub2, cMap)
-            caxis([-0.4 0.4])
-            axis([dnUTC_AQ(idxAQ(1)) dnUTC_AQ(idxAQ(end)) 1 11])
-            datetick('x','keeplimits')
-            y1 = get(gca,'ylim');
-            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
-            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 11])
-            xlabel('Time'); ylabel('Distance above bed (m)');
-            ttlU = ['U velocity at STRING B'];
-            title(ttlU)
-            
-            timeMat = repmat(dnUTC(idxTChain),[1,length(zBedB)]);
-            sub3 = subplot(2,3,[5 6]);
-            pcolor(timeMat',zBedB_All(idxTChain,:)',tempB(:,idxTChain))
-            shading flat; hcb =colorbar;
-            colormap(sub3, parula);
-            hold on
-            %             pcolor(dnUTC(idxTChain),depth_tchain,tempB(1,idxTChain))
-            % plot(dnUTC_AQ(idxAQ),(depth(idxAQ)-mean(depth(idxAQ))+4),'r')
-            % plot(dnTides(idxTides),(WL(idxTides)-mean(WL(idxTides))+4),'y')
-            caxis(tempLimits)
-            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 max(depth)])
-            datetick('x','keeplimits')
-            y1 = get(gca,'ylim');
-            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
-            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 9])
-            xlabel('Time'); ylabel('Distance above bed (m)');
-            ttlC = ['Temperature at STRING B'];
-            title(ttlC)
-            xlabel(hcb,'Temperature C')
-            
-            ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
-            imgNum=imgNum+1;
-            print(fig,ttlFig,'-dpng')
-            close all
-            clear ttl ttlFig
+            ii = ii+1;
         end
     end
-    clear Azi Rg results data timex timeInt t_dv t_dn tC timeCube1 timeCube2 timeCube3 s UNow VNow time
+    
+    if exist('timexCell') == 0
+    else
+        
+        % Convert to world coordinates
+        heading = results.heading-rotation;
+        [AZI,RG] = meshgrid(Azi,Rg);
+        TH = pi/180*(90-AZI-heading);
+        [xdom,ydom] = pol2cart(TH,RG);
+        %     x0 = results.XOrigin;
+        %     y0 = results.YOrigin;
+        x0 = 0;
+        y0 = 0;
+        xdom = (xdom + x0);
+        ydom = (ydom + y0);
+        
+        % add MacMahan's instruments
+        % find coordinates of MacMahan instruments
+        latJM = [34.98152 34.98260 34.98113 34.98035 34.98597];
+        lonJM = [-120.65164 -120.65731 -120.65024 -120.65172 -120.65032];
+        
+        [yUTM_JM, xUTM_JM] = ll2UTM(latJM,lonJM);
+        X_JM = xUTM_JM - results.XOrigin;
+        Y_JM = yUTM_JM - results.YOrigin;
+        
+        % rotate JM instruments onto the same grid
+        [thJM,rgJM] = cart2pol(X_JM,Y_JM);
+        aziJM = wrapTo360(-thJM*180/pi + 90 - results.heading);
+        aziJMC = aziJM - rotation;
+        thJMC = pi/180*(90 - aziJMC - results.heading);
+        [xJMC,yJMC] = pol2cart(thJMC,rgJM);
+        
+        % add Oceanus instruments
+        % find coordinates of Oceanus instruments
+        latOc = [35.00258 35.00163 35.01176 35.01115 34.9902 34.98947 35.00908 34.98753...
+            35.02070 35.01995 35.00762 35.00715 34.99740 34.99693 34.98640 34.98600...
+            34.97535 34.97482 34.99587 35.00597 34.98508 35.004242 35.004128];
+        lonOc = [-120.72263 -120.72283 -120.700133 -120.700333 -120.70285 -120.70277 -120.68142...
+            -120.68477 -120.66370 -120.66448 -120.66800 -120.66792 -120.66953 -120.66967...
+            -120.67275 -120.67297 -120.67553 -120.67555 -120.66152 -120.65537 -120.66212...
+            -120.646192 -120.646586];
+        
+        [yUTM_Oc, xUTM_Oc] = ll2UTM(latOc,lonOc);
+        X_Oc = xUTM_Oc - results.XOrigin;
+        Y_Oc = yUTM_Oc - results.YOrigin;
+        
+        % rotate OC instruments onto the same grid
+        [thOc,rgOc] = cart2pol(X_Oc,Y_Oc);
+        aziOc = wrapTo360(-thOc*180/pi + 90 - results.heading);
+        aziOcC = aziOc - rotation;
+        thOcC = pi/180*(90 - aziOcC - results.heading);
+        [xOcC,yOcC] = pol2cart(thOcC,rgOc);
+
+        for IMAGEINDEX = 1:numel(timexCell)
+            clear timex
+            timex = timexCell{IMAGEINDEX};
+            timeInt = timeIntCell{IMAGEINDEX};
+            time = epoch2Matlab(mean(timeInt));
+            dv = datevec(time);
+            
+            % find min and max temperature
+            minTemp = min([min(min(tempOC50)),min(min(tempOC32)),min(min(tempOC17)),...
+                min(min(tempA)), min(min(tempC))]);
+            maxTemp = max([max(max(tempOC50)),max(max(tempOC32)),max(max(tempOC17)),...
+                max(max(tempA)), max(max(tempC))]);
+            
+            fig = figure('visible','off');
+            fig.PaperUnits = 'inches';
+            fig.PaperPosition = [0 0 20 8];
+            
+            sub1 = subplot(5,4, [1 5 9 13 17]);
+            pcolor(xdom,ydom,timex)
+            shading interp; axis image
+            hold on
+            plot(xJMC(1:4),yJMC(1:4),'b.','MarkerSize',20)
+            plot(xOcC,yOcC,'g.','MarkerSize',20)
+            colormap(sub1,hot)
+            caxis([colorAxisLimits(1) colorAxisLimits(2)])
+            axis([XYLimits(1,1) XYLimits(1,2) XYLimits(2,1) XYLimits(2,2)])
+            ttl = [num2str(dv(1)) num2str(dv(2),'%02i') num2str(dv(3),'%02i') ' - ',...
+                num2str(dv(4),'%02i') ':', num2str(dv(5),'%02i')...
+                ':' num2str(round(dv(6)),'%02i') ' UTC'];
+            title(ttl)
+            xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)')
+            ttlFig = sprintf('%s%s%04i',saveFolder,'\Img_',imgNum);
+            
+            sub2 = subplot(5,4,[2 3 4]);
+            pcolor(tOC50,zBed50,tempOC50)
+            shading flat; colorbar;
+            colormap(sub2,brewermap([],'*RdBu'))
+            %             caxis([min(min(tempOC50)) max(max(tempOC50))])
+            caxis([minTemp maxTemp])
+            axis([timeInt1 timeIntEnd 0 max(zBed50)])
+            datetick('x','keeplimits')
+            y1 = get(gca,'ylim');
+            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
+            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 11])
+            %xlabel('Time'); %ylabel('Distance above bed (m)');
+            ttl2 = ['Temperature at 50 m contour'];
+            title(ttl2)
+            
+            sub3 = subplot(5,4,[6 7 8]);
+            pcolor(tOC32,zBed32,tempOC32)
+            shading flat; colorbar;
+            colormap(sub3,brewermap([],'*RdBu'))
+            %             caxis([min(min(tempOC32)) max(max(tempOC32))])
+            caxis([minTemp maxTemp])
+            axis([timeInt1 timeIntEnd 0 max(zBed32)])
+            datetick('x','keeplimits')
+            y1 = get(gca,'ylim');
+            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
+            %xlabel('Time'); %ylabel('Distance above bed (m)');
+            ttl3 = ['Temperature at 32 m contour'];
+            title(ttl3)
+            
+            sub4 = subplot(5,4,[10 11 12]);
+            pcolor(tOC17,zBed17,tempOC17)
+            shading flat; colorbar;
+            colormap(sub4,brewermap([],'*RdBu'))
+            %             caxis([min(min(tempOC17)) max(max(tempOC17))])
+            caxis([minTemp maxTemp])
+            axis([timeInt1 timeIntEnd 0 max(zBed17)])
+            datetick('x','keeplimits')
+            y1 = get(gca,'ylim');
+            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
+            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 11])
+            % xlabel('Time'); ylabel('Distance above bed (m)');
+            ttl4 = ['Temperature at 17 m contour'];
+            title(ttl4)
+            
+            idx = find(dnUTC > timeInt1 & dnUTC < timeIntEnd);
+            sub5 = subplot(5,4,[14 15 16]);
+            pcolor(dnUTC(idx),zBedA,tempA(:,idx))
+            shading flat; colorbar;
+            colormap(sub5,brewermap([],'*RdBu'))
+            %             caxis([min(min(tempA)) max(max(tempA))])
+            caxis([minTemp maxTemp])
+            axis([timeInt1 timeIntEnd 0 max(zBedA)])
+            datetick('x','keeplimits')
+            y1 = get(gca,'ylim');
+            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
+            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 11])
+            % xlabel('Time'); ylabel('Distance above bed (m)');
+            ttl5 = ['Temperature at STR A'];
+            title(ttl5)
+            
+            sub6 = subplot(5,4,[18 19 20]);
+            pcolor(dnUTC(idx),zBedC,tempC(:,idx))
+            shading flat; colorbar;
+            colormap(sub6,brewermap([],'*RdBu'))
+            %             caxis([min(min(tempA)) max(max(tempA))])
+            caxis([minTemp maxTemp])
+            axis([timeInt1 timeIntEnd 0 max(zBedC)])
+            datetick('x','keeplimits')
+            y1 = get(gca,'ylim');
+            line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
+            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 11])
+            xlabel('Time'); %ylabel('Distance above bed (m)');
+            ttl6 = ['Temperature at STR C'];
+            title(ttl6)
+            
+            imgNum=imgNum+1;
+            print(fig,ttlFig,'-dpng')
+            close all
+            clear ttl ttlFig timex timeInt time dv
+        end
+    end
+    clear timexCell timeIntCell data
 end

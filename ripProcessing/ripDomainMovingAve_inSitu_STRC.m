@@ -1,42 +1,48 @@
-% Oceano_NPS_RadarImage.m
-% This code plots the radar image with the relevant temperature profiles
-% from the Oceano array and the NPS array
-% 3/9/2018
-
-clear variables; home; close all
+% ripDomainMovingAve_inSitu.m
+% 9/17/2017
+clear variables; home
 
 %% Add path
 addpath(genpath('C:\Data\ISDRI\isdri-scripts'));
 addpath(genpath('C:\Data\ISDRI\cBathy'));
 
-%% define time period of interest
-startTime = '20170907_2000';
-endTime = '20170908_2200';
+%% define time of interest
+startTime = '20170908_1000';
+endTime = '20170908_1600';
+
 Hub = 'E';
 baseDir = [Hub ':\guadalupe\processed\'];
 
-saveFolder = [Hub ':\guadalupe\postprocessed\inSitu\OceanoNPS\' startTime '-' endTime];
+saveFolder = ['E:\guadalupe\postprocessed\ripVideos\temperatureProfiles\' startTime '-' endTime];
 mkdir(saveFolder)
 
 %% define figure parameters
 colorAxisLimits = [20 220];
-XYLimits = [-6000 0; -6000 6000];
-% XYLimits = [-1500 -500; -1000 1000];
+% XYLimits = [-1300 -500; -300 2900];
+XYLimits = [-1500 -500; -1000 1000];
 
 %% load variables
-A = load('E:\supportData\MacMahan\ptsal_tchain_STR3_A.mat');
-B = load('E:\supportData\MacMahan\ptsal_tchain_STR3_B.mat');
-C = load('E:\supportData\MacMahan\ptsal_tchain_STR3_C.mat');
-E = load('E:\supportData\MacMahan\ptsal_tchain_STR3_E.mat');
-OC17 = load('E:\supportData\OSUMoorings\OC17S-T_60s.mat');
-OC32 = load('E:\supportData\OSUMoorings\OC32S-T_60s.mat');
-OC50 = load('E:\supportData\OSUMoorings\OC50-T_60s.mat');
+rot = 13;
+bave = 3;
+[dnUTC_AQ,Ubave,Vbave,Wbave,ZBed,depth] = loadADCP('D:\Data\ISDRI\SupportData\MacMahan\STR3_AQ_Annika.mat', bave, rot);
 
-%% redefine variables
-AQ = load('E:\supportData\MacMahan\STR3_AQ.mat');
-t = AQ.time_dnum;
-depth = AQ.Depth;
-ZBed = AQ.Zbed;
+for i = 1:size(Ubave,1)
+    idx(i) = find(~isnan(Ubave(i,:)),1,'last');
+    UUS(i,:) = Ubave(i,(idx(i)-2):idx(i));
+    VVS(i,:) = Vbave(i,(idx(i)-2):idx(i));
+end
+
+U_surface = mean(UUS,2);
+V_surface = mean(VVS,2);
+
+A = load('D:\Data\ISDRI\SupportData\MacMahan\ptsal_tchain_STR3_A');  % Most offshore
+B = load('D:\Data\ISDRI\SupportData\MacMahan\ptsal_tchain_STR3_B');  % Middle, with ADCP
+C = load('D:\Data\ISDRI\SupportData\MacMahan\ptsal_tchain_STR3_C');  % Most onshore
+E = load('D:\Data\ISDRI\SupportData\MacMahan\ptsal_tchain_STR3_E');  % to south
+load('C:\Data\ISDRI\isdri-scripts\ripProcessing\transects\cMap.mat')
+[dnTides,WL] = loadTidesNOAA('D:\Data\ISDRI\SupportData\Tides\TideData_NOAA9411406.txt');
+
+%% Redefine variables
 
 tA = A.TCHAIN.time_dnum;
 tempA = A.TCHAIN.TEMP';
@@ -55,36 +61,11 @@ zBedC(1) = zBedC(2) + (zBedC(2)-zBedC(3));
 
 tE = E.TCHAIN.time_dnum;
 tempE = E.TCHAIN.TEMP';
-zBedE = E.TCHAIN.ZBEDT; % meters above bed
+zBedE = E.TCHAIN.ZBEDT;
 zBedE(1) = zBedE(2) + (zBedE(2)-zBedE(3));
 clear A B C E AQ
 
-tOC17 = OC17.dn;
-tempOC17 = OC17.temp;
-lat17 = OC17.lat;
-lon17 = OC17.lon;
-zBed17 = OC17.mab; % meters above bed
-
-tOC32 = OC17.dn;
-tempOC32 = OC17.temp;
-lat32 = OC17.lat;
-lon32 = OC17.lon;
-zBed32 = OC17.mab; % meters above bed
-
-tOC50 = OC17.dn;
-tempOC50 = OC17.temp;
-lat50 = OC17.lat;
-lon50 = OC17.lon;
-zBed50 = OC17.mab; % meters above bed
-clear OC17 OC32 OC50
-
 %% Redefine time vectors in UTC
-dvPDT_AQ = datevec(t);    % tA tB tC and tE are the same
-dvUTC_AQ = dvPDT_AQ; 
-dvUTC_AQ(:,4) = dvPDT_AQ(:,4)+7;  % add 7 hours to convert from PDT to UTC   
-dnUTC_AQ = datenum(dvUTC_AQ);
-dvUTC_AQ = datevec(dnUTC_AQ);
-
 dvPDT = datevec(tA);    % tA tB tC and tE are the same
 dvUTC = dvPDT;
 dvUTC(:,4) = dvPDT(:,4)+7;  % add 7 hours to convert from PDT to UTC
@@ -131,8 +112,10 @@ enddn = datenum([str2num(endTime(1:4)),str2num(endTime(5:6)),...
 idxAQ = find(dnUTC_AQ > startdn & dnUTC_AQ < enddn);
 idxTChain = find(dnUTC > startdn & dnUTC < enddn);
 
-tempLimits(1) = min(min(tempB(:,idxTChain)));
-tempLimits(2) = max(max(tempB(:,idxTChain)));
+% tempLimits(1) = min(min(tempC(:,idxTChain)));
+% tempLimits(2) = max(max(tempC(:,idxTChain)));
+tempLimits(1) = 16;
+tempLimits(2) = 18.5;
 
 [~,firstFileIndex] = min(abs(startdn - dnList));
 [~,lastFileIndex] = min(abs(enddn - dnList));
@@ -141,9 +124,9 @@ cubeList = cubeListAll(firstFileIndex:lastFileIndex);
 
 %% Load data from 512 rotation runs
 xCutoff = 1068; % range index for clipped scan
-rotation = 0; % domain rotation
+rotation = 13; % domain rotation
 imgNum = 1;
-for i = 1:length(cubeList)
+for i = 23:length(cubeList)
     % Load radar data
     
     cubeName = [cubeList(i).folder '\' cubeList(i).name];
@@ -284,23 +267,24 @@ for i = 1:length(cubeList)
             ttlU = ['U velocity at STRING B'];
             title(ttlU)
             
-            timeMat = repmat(dnUTC(idxTChain),[1,length(zBedB)]);
+               timeMat = repmat(dnUTC(idxTChain),[1,length(zBedC)]);
             sub3 = subplot(2,3,[5 6]);
-            pcolor(timeMat',zBedB_All(idxTChain,:)',tempB(:,idxTChain))
+            pcolor(dnUTC(idxTChain),zBedC,tempC(:,idxTChain))
+%             pcolor(timeMat',zBedC(idxTChain,:)',tempC(:,idxTChain))
             shading flat; hcb =colorbar;
-            colormap(sub3, parula);
+            colormap(sub3,brewermap([],'*RdBu'))
             hold on
             %             pcolor(dnUTC(idxTChain),depth_tchain,tempB(1,idxTChain))
             % plot(dnUTC_AQ(idxAQ),(depth(idxAQ)-mean(depth(idxAQ))+4),'r')
             % plot(dnTides(idxTides),(WL(idxTides)-mean(WL(idxTides))+4),'y')
             caxis(tempLimits)
-            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 max(depth)])
+            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 8])
             datetick('x','keeplimits')
             y1 = get(gca,'ylim');
             line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
             % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 9])
             xlabel('Time'); ylabel('Distance above bed (m)');
-            ttlC = ['Temperature at STRING B'];
+            ttlC = ['Temperature at STRING C'];
             title(ttlC)
             xlabel(hcb,'Temperature C')
             
@@ -352,22 +336,24 @@ for i = 1:length(cubeList)
             ttlU = ['U velocity at STRING B'];
             title(ttlU)
             
-            timeMat = repmat(dnUTC(idxTChain),[1,length(zBedB)]);
+                timeMat = repmat(dnUTC(idxTChain),[1,length(zBedC)]);
             sub3 = subplot(2,3,[5 6]);
-            pcolor(timeMat',zBedB_All(idxTChain,:)',tempB(:,idxTChain))
+            pcolor(dnUTC(idxTChain),zBedC,tempC(:,idxTChain))
+%             pcolor(timeMat',zBedC(idxTChain,:)',tempC(:,idxTChain))
             shading flat; hcb =colorbar;
-            colormap(sub3, parula);
+            colormap(sub3,brewermap([],'*RdBu'))
             hold on
             %             pcolor(dnUTC(idxTChain),depth_tchain,tempB(1,idxTChain))
             % plot(dnUTC_AQ(idxAQ),(depth(idxAQ)-mean(depth(idxAQ))+4),'r')
             % plot(dnTides(idxTides),(WL(idxTides)-mean(WL(idxTides))+4),'y')
             caxis(tempLimits)
-            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 max(depth)])
+            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 8])
             datetick('x','keeplimits')
             y1 = get(gca,'ylim');
             line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
+            % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 9])
             xlabel('Time'); ylabel('Distance above bed (m)');
-            ttlC = ['Temperature at STRING B'];
+            ttlC = ['Temperature at STRING C'];
             title(ttlC)
             xlabel(hcb,'Temperature C')
             
@@ -421,23 +407,24 @@ for i = 1:length(cubeList)
             ttlU = ['U velocity at STRING B'];
             title(ttlU)
             
-            timeMat = repmat(dnUTC(idxTChain),[1,length(zBedB)]);
+                timeMat = repmat(dnUTC(idxTChain),[1,length(zBedC)]);
             sub3 = subplot(2,3,[5 6]);
-            pcolor(timeMat',zBedB_All(idxTChain,:)',tempB(:,idxTChain))
+            pcolor(dnUTC(idxTChain),zBedC,tempC(:,idxTChain))
+%             pcolor(timeMat',zBedC(idxTChain,:)',tempC(:,idxTChain))
             shading flat; hcb =colorbar;
-            colormap(sub3, parula);
+            colormap(sub3,brewermap([],'*RdBu'))
             hold on
             %             pcolor(dnUTC(idxTChain),depth_tchain,tempB(1,idxTChain))
             % plot(dnUTC_AQ(idxAQ),(depth(idxAQ)-mean(depth(idxAQ))+4),'r')
             % plot(dnTides(idxTides),(WL(idxTides)-mean(WL(idxTides))+4),'y')
             caxis(tempLimits)
-            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 max(depth)])
+            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 8])
             datetick('x','keeplimits')
             y1 = get(gca,'ylim');
             line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
             % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 9])
             xlabel('Time'); ylabel('Distance above bed (m)');
-            ttlC = ['Temperature at STRING B'];
+            ttlC = ['Temperature at STRING C'];
             title(ttlC)
             xlabel(hcb,'Temperature C')
             
@@ -556,23 +543,24 @@ for i = 1:length(cubeList)
             ttlU = ['U velocity at STRING B'];
             title(ttlU)
             
-            timeMat = repmat(dnUTC(idxTChain),[1,length(zBedB)]);
+            timeMat = repmat(dnUTC(idxTChain),[1,length(zBedC)]);
             sub3 = subplot(2,3,[5 6]);
-            pcolor(timeMat',zBedB_All(idxTChain,:)',tempB(:,idxTChain))
+            pcolor(dnUTC(idxTChain),zBedC,tempC(:,idxTChain))
+%             pcolor(timeMat',zBedC(idxTChain,:)',tempC(:,idxTChain))
             shading flat; hcb =colorbar;
-            colormap(sub3, parula);
+            colormap(sub3,brewermap([],'*RdBu'))
             hold on
             %             pcolor(dnUTC(idxTChain),depth_tchain,tempB(1,idxTChain))
             % plot(dnUTC_AQ(idxAQ),(depth(idxAQ)-mean(depth(idxAQ))+4),'r')
             % plot(dnTides(idxTides),(WL(idxTides)-mean(WL(idxTides))+4),'y')
             caxis(tempLimits)
-            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 max(depth)])
+            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 8])
             datetick('x','keeplimits')
             y1 = get(gca,'ylim');
             line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
             % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 9])
             xlabel('Time'); ylabel('Distance above bed (m)');
-            ttlC = ['Temperature at STRING B'];
+            ttlC = ['Temperature at STRING C'];
             title(ttlC)
             xlabel(hcb,'Temperature C')
             
@@ -682,23 +670,24 @@ for i = 1:length(cubeList)
             ttlU = ['U velocity at STRING B'];
             title(ttlU)
             
-            timeMat = repmat(dnUTC(idxTChain),[1,length(zBedB)]);
+                timeMat = repmat(dnUTC(idxTChain),[1,length(zBedC)]);
             sub3 = subplot(2,3,[5 6]);
-            pcolor(timeMat',zBedB_All(idxTChain,:)',tempB(:,idxTChain))
+            pcolor(dnUTC(idxTChain),zBedC,tempC(:,idxTChain))
+%             pcolor(timeMat',zBedC(idxTChain,:)',tempC(:,idxTChain))
             shading flat; hcb =colorbar;
-            colormap(sub3, parula);
+            colormap(sub3,brewermap([],'*RdBu'))
             hold on
             %             pcolor(dnUTC(idxTChain),depth_tchain,tempB(1,idxTChain))
             % plot(dnUTC_AQ(idxAQ),(depth(idxAQ)-mean(depth(idxAQ))+4),'r')
             % plot(dnTides(idxTides),(WL(idxTides)-mean(WL(idxTides))+4),'y')
             caxis(tempLimits)
-            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 max(depth)])
+            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 8])
             datetick('x','keeplimits')
             y1 = get(gca,'ylim');
             line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
             % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 9])
             xlabel('Time'); ylabel('Distance above bed (m)');
-            ttlC = ['Temperature at STRING B'];
+            ttlC = ['Temperature at STRING C'];
             title(ttlC)
             xlabel(hcb,'Temperature C')
             
@@ -808,23 +797,24 @@ for i = 1:length(cubeList)
             ttlU = ['U velocity at STRING B'];
             title(ttlU)
             
-            timeMat = repmat(dnUTC(idxTChain),[1,length(zBedB)]);
+               timeMat = repmat(dnUTC(idxTChain),[1,length(zBedC)]);
             sub3 = subplot(2,3,[5 6]);
-            pcolor(timeMat',zBedB_All(idxTChain,:)',tempB(:,idxTChain))
+            pcolor(dnUTC(idxTChain),zBedC,tempC(:,idxTChain))
+%             pcolor(timeMat',zBedC(idxTChain,:)',tempC(:,idxTChain))
             shading flat; hcb =colorbar;
-            colormap(sub3, parula);
+            colormap(sub3,brewermap([],'*RdBu'))
             hold on
             %             pcolor(dnUTC(idxTChain),depth_tchain,tempB(1,idxTChain))
             % plot(dnUTC_AQ(idxAQ),(depth(idxAQ)-mean(depth(idxAQ))+4),'r')
             % plot(dnTides(idxTides),(WL(idxTides)-mean(WL(idxTides))+4),'y')
             caxis(tempLimits)
-            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 max(depth)])
+            axis([dnUTC(idxTChain(1)) dnUTC(idxTChain(end)) 1 8])
             datetick('x','keeplimits')
             y1 = get(gca,'ylim');
             line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
             % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 9])
             xlabel('Time'); ylabel('Distance above bed (m)');
-            ttlC = ['Temperature at STRING B'];
+            ttlC = ['Temperature at STRING C'];
             title(ttlC)
             xlabel(hcb,'Temperature C')
             
@@ -837,3 +827,11 @@ for i = 1:length(cubeList)
     end
     clear Azi Rg results data timex timeInt t_dv t_dn tC timeCube1 timeCube2 timeCube3 s UNow VNow time
 end
+
+% % make movie
+% dataFolder = [Hub ':\guadalupe\processed\' startTime(1:4) '-' startTime(5:6)...
+%     '-' startTime(7:8)];
+% saveFolder = 'C:\Data\ISDRI\postprocessed\ripVideos\';
+% saveFolderGif = [Hub ':\gifs'];
+
+% makeRipMovie(startTime, endTime, dataFolder, saveFolder, saveFolderGif)
