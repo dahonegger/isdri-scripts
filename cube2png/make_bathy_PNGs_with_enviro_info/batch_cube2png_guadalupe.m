@@ -17,7 +17,11 @@ baseDir = 'E:\guadalupe\processed\'; % HUB 1
 
 % PNG LOCATION
 % saveDir = 'C:\Data\isdri\guadalupe\postprocessed\timex_enviroInfo\'; % Dell#2 HARD DRIVE
+<<<<<<< HEAD
 saveDir = 'F:\guadalupe\postprocessed\enviroInfoPNGs2\'; % HUB
+=======
+saveDir = 'D:\guadalupe\postprocessed\enviroInfoPNGs3\'; % HUB
+>>>>>>> enviro_info
 
 % rewrite existing files in save directory? true=yes
 doOverwrite = false;
@@ -47,7 +51,11 @@ if downloadWaves; fetchWavesNDBC(46011,fullfile(supportDataPath,'Waves'),'WaveDa
 
 %% Process Files 
 imgId = 1;
+<<<<<<< HEAD
 for iDay = 1:length(dayFolder)
+=======
+for iDay = 48:49
+>>>>>>> enviro_info
         
     dayFolder(iDay).polRun = dir(fullfile(baseDir,dayFolder(iDay).name,'*_pol.mat'));
     saveDirSub = [saveDir,dayFolder(iDay).name];

@@ -6,8 +6,8 @@ function cube2png_guadalupe_enviro(cubeFile,pngFile)
 % 9/17/2017
 
 % User options: leave empty [] for Matlab auto-sets
-colorAxLimits           = [0 150]; % This gets updated for bad data periods (~May 28-30)
-axisLimits              = [-13 5 -12 13]; % Full, In kilometers
+colorAxLimits           = [75 200]; 
+axisLimits              = [-13 6 -13 13]; % Full, In kilometers
 plottingDecimation      = [5 1]; % For faster plotting, make this [2 1] or higher
 
 % User overrides: leave empty [] otherwise
@@ -18,7 +18,7 @@ userOriginLonLat        = [];   % Use these lat-lon origin coords
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LOAD DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Load radar data
-load(cubeFile,'Azi','Rg','results','timex','timeInt') % 6/16/17 with new process scheme, 'timex' available
+load(cubeFile,'Azi','Rg','results','timex','timeInt','daqConfig') % 6/16/17 with new process scheme, 'timex' available
 % [a, MSGID] = lastwarn();warning('off', MSGID);
 
 if ~exist('timex','var') || isempty(timex)
@@ -32,6 +32,12 @@ end
 
 if ~exist('timex','var') || isempty(timex)
 else
+
+% shift using gate delay
+shift = daqConfig.gateDelay + 126; %-126 is gateDelay of GOOD scans
+if shift <= 0; shift = 0; end
+Rg = Rg(1:end-shift);
+timex = timex(shift+1:end,:);
     
    
 % Implement user overrides
@@ -67,7 +73,12 @@ nowTime = epoch2Matlab(nanmean(timeInt(:))); % UTC
 [dnWind,magWind,dirWind] = loadWindNDBC('MetData_NDBC46011.txt', nowTime);
 
 % Load wave data from wave station file
-[dnWaves,Hs,dirWaves] = loadWavesNDBC('WaveData_NDBC46011.txt');
+if nowTime <= datenum('09/24/2017 00:00','mm/dd/yyyy HH:MM')
+    [dnWaves,Hs,dirWaves] = loadWavesNDBC_historical('WaveData_NDBC46011_historical.txt');
+else
+    [dnWaves,Hs,dirWaves] = loadWavesNDBC('WaveData_NDBC46011.txt');
+end
+
 [tmp tmp] = min(abs(dnWaves-nowTime));
 dirWaves = dirWaves(tmp);
 % Load tide data from tide station file
@@ -116,8 +127,8 @@ titleLine2 = sprintf('\\makebox[4in][c]{%s UTC (%s PDT)}',datestr(epoch2Matlab(n
 % titleLine2 = sprintf('\\makebox[4in][c]{%s UTC (%s EDT)}',datestr(nowTime+4/24,'yyyy-mmm-dd HH:MM:SS'),datestr(nowTime,'HH:MM:SS'));
 title({titleLine1,titleLine2},...
 'fontsize',14,'interpreter','latex');
-xlim([-7 7]); ylim([-7 7])
-caxis([75 225])
+% xlim([-7 7]); ylim([-7 7])
+% caxis([75 225])
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TIDE SIGNAL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 set(fig,'currentaxes',axTide)
 cla(axTide)

@@ -3,18 +3,18 @@
 % add paths to ISDRI Data
 
 % GITHUB DATA PATH
-addpath(genpath('C:\Data\isdri\isdri-scripts')) %GITHUB REPOSITORY
+addpath(genpath('C:\Users\user\Desktop\isdri-scripts')) %GITHUB REPOSITORY
 
 % MAT FILES LOCATION
 % baseDir = 'E:\DAQ-data\processed\'; %CTR HUB
-baseDir = 'D:\purisima\processed\'; % LENOVO HARD DRIVE
+baseDir = 'D:\guadalupe\processed\'; % LENOVO HARD DRIVE
 
 % PNG LOCATION
 % saveDir = 'E:\PNGs\timex_enviroInfo5\'; % CTR HUB
-saveDir = 'D:\purisima\postprocessed\enviro\'; % LENOVO HARD DRIVE
+saveDir = 'C:\Users\user\Desktop\for_jack\'; % LENOVO HARD DRIVE
 
 % rewrite existing files in save directory? true=yes
-doOverwrite = false;
+doOverwrite = true;
 
 
 
@@ -26,13 +26,13 @@ dayFolder = dir([baseDir,'2017*']);
 
 %% Process Files 
 imgId = 1;
-for iDay = 1:length(dayFolder)
+for iDay = 11:11
         
     dayFolder(iDay).polRun = dir(fullfile(baseDir,dayFolder(iDay).name,'*_pol.mat'));
     saveDirSub = [saveDir,dayFolder(iDay).name];
     if ~exist(saveDirSub);mkdir(saveDirSub);end
     
-        for iRun = 1:length(dayFolder(iDay).polRun)
+        for iRun = 383:528
             
             fprintf('%3.f of %3.f in dir %3.f of %3.f: ',...
                 iRun,length(dayFolder(iDay).polRun),...

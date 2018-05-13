@@ -1,14 +1,14 @@
 close all; clear all;
-
+tic
 %% USER DEFINED PARAMETERS
 addpath(genpath('C:\Users\user\Desktop\UAV-Processing-Toolbox')) %wherever repository is cloned
 addpath(genpath('C:\Data\isdri\isdri-scripts')) %wherever repository is cloned
 
-baseFolder = 'F:\uasData\10.23.17 Guadalupe (cBathy)';
-pngFolder = 'F:\uasData\10.23.17 Guadalupe (cBathy)\cBathy\DJI_0006 thru DJI_0009\';
-fname = 'DJI_0006_DJI_0007_DJI_0008_DJI_0009.MP4';
-airDataFile = 'F:\uasData\Full_AirData_Archive\2017-10-23_8-36-13_Standard.csv';
-videoStartGuess = datenum('10/23/2017 8:44','mm/dd/yyyy HH:MM'); %approx, to closest minute, get from video properties
+baseFolder = 'F:\uasData\09.11.17 Guadalupe (rips)\';
+pngFolder = 'F:\uasData\09.11.17 Guadalupe (rips)\orthonormal\';
+fname = 'DJI_0046.MP4';
+airDataFile = 'F:\uasData\Full_AirData_Archive\2017-09-11_16-25-59_Standard.csv';
+videoStartGuess = datenum('09/11/2017 23:37','mm/dd/yyyy HH:MM'); %approx, to closest minute, get from video properties
 savePNGS = 1; %want to make PNGs? 1=yes
 addpath(genpath(baseFolder)) %wherever footage lives, e.g. HUB 1 or 2
 
@@ -39,14 +39,14 @@ extrinsicParams.heading = rad2deg(azimuth);
 extrinsicParams.tilt = rad2deg(tilt);
 extrinsicParams.roll = roll; 
 %% PREP EXTRINSIC PARAMS
-Xcam = 0; Ycam = 0;
+Xcam = 0; Ycam = 0; %
 beta = [Xcam Ycam Zcam azimuth tilt roll]; %radians
 % set bounds around camera "origin" that frame should extend
-Xmin = Xcam - 1000;
-Xmax = Xcam - 100;
-Ymin = Ycam - 200;
-Ymax = Ycam + 700;
-xy = [Xmin .5 Xmax Ymin .5 Ymax];
+Xmin = Xcam - 0;
+Xmax = Xcam + 400;
+Ymin = Ycam - 400;
+Ymax = Ycam + 200;
+xy = [Xmin .1 Xmax Ymin .1 Ymax];
 
 %% PREP INTRINSIC PARAMS (SPECIFIC TO SHOOTING MODE)
 % PICK THE PATH TO THE RIGHT SHOOTING MODE, EACH FOLDER CONTAINS A UNIQUE
@@ -68,25 +68,27 @@ whichFrame = 1;
 
 %% CREATE FRAME-BY-FRAME TIME VECTOR
 fps = videoObject.FrameRate;
-df_frames = round(videoObject.FrameRate./2);
-df_seconds = (1/2)./60./60./24;
+% df_frames = round(videoObject.FrameRate);
+df_frames = 29;
+df_seconds = (fps/df_frames)./60./60./24;
 frameTimes_all = [time:df_seconds:time+((numberOfFrames/df_frames)*df_seconds)];
 
 %% OPEN MOVIE FRAME BY FRAME, RECTIFY 
 
-parseVal = round(numberOfFrames./3);
+parseVal = round(numberOfFrames./1);
 globalFrame = 1;
 
-for jj = 1:parseVal:(parseVal*2)
+for jj = 1:numberOfFrames
 
     whichFrame = 1;
 
-    for i = jj:df_frames:jj+parseVal
+    for i = 1:df_frames:numberOfFrames
         
         frameTimes = frameTimes_all(ceil(jj/df_frames):round((jj+parseVal)/df_frames));
         warning('off','all')
         frame = read(videoObject,i);
         [Irect,x,y]=rectframe(double(frame),beta,lcp,xy);
+        Irect = flipud(Irect);
         layer1(:,:,whichFrame) = uint8(Irect(:,:,1));
         layer2(:,:,whichFrame) = uint8(Irect(:,:,2));
         layer3(:,:,whichFrame) = uint8(Irect(:,:,3));
@@ -95,15 +97,15 @@ for jj = 1:parseVal:(parseVal*2)
         
         if savePNGS == 1
         fig=figure; hold on
-        set(gcf,'visible','off')
-        imagesc(x,y,uint8(Irect)); %imagesc needs 3 layers(r,g,b) in uint8 format
-        title({['cBathy Footage from Guadalupe'],[datestr(frameTimes(whichFrame))]})
+        set(gcf,'visible','on')
+        imagesc(x,y,uint8((flipud(Irect)))); %imagesc needs 3 layers(r,g,b) in uint8 format
+        title([datestr(frameTimes(whichFrame))])
         xlabel('X [meters]');ylabel('Y [meters]');
         axis image
         fig.PaperUnits = 'inches';
         fig.PaperPosition = [0 0 3 3];
-        saveName = datestr(frameTimes(i),'mmddyy HH.MM.SS.FFF'); %make sure there are milliseconds
-        print([baseFolder,saveName,'.png'],'-dpng','-r300')
+        saveName = datestr(frameTimes(whichFrame),'mmddyy HH.MM.SS.FFF'); %make sure there are milliseconds
+        print([pngFolder,saveName,'.png'],'-dpng','-r300')
         close all
         
         else 
@@ -114,10 +116,10 @@ for jj = 1:parseVal:(parseVal*2)
     end
     
     [name,ext] = fileparts(fname);
-    save([ext,'_frame',num2str(jj),'_thruFrame_',num2str(jj+parseVal),'.mat'],'layer1','layer2','layer3','x','y','extrinsicParams','frameTimes','-v7.3')
+    save([pngFolder,ext,'_orthonormal.mat'],'layer1','layer2','layer3','x','y','extrinsicParams','frameTimes','-v7.3')
 
     clear('layer1','layer2','layer3');
 
 end
-
+toc
 
