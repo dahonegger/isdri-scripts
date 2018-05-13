@@ -3,18 +3,18 @@
 % add paths to ISDRI Data
 
 % GITHUB DATA PATH
-addpath(genpath('C:\Users\user\Desktop\isdri-scripts')) %GITHUB REPOSITORY
+addpath(genpath('C:\Data\isdri\isdri-scripts')) %GITHUB REPOSITORY
 
 % MAT FILES LOCATION
 % baseDir = 'E:\DAQ-data\processed\'; %CTR HUB
-baseDir = 'E:\purisima\processed\'; % LENOVO HARD DRIVE
+baseDir = 'D:\purisima\processed\'; % LENOVO HARD DRIVE
 
 % PNG LOCATION
 % saveDir = 'E:\PNGs\timex_enviroInfo5\'; % CTR HUB
-saveDir = 'E:\purisima\postprocessed\PNGs\'; % LENOVO HARD DRIVE
+saveDir = 'D:\purisima\postprocessed\enviro\'; % LENOVO HARD DRIVE
 
 % rewrite existing files in save directory? true=yes
-doOverwrite = true;
+doOverwrite = false;
 
 
 

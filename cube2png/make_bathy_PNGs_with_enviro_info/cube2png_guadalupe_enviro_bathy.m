@@ -77,11 +77,19 @@ ydom = ydom + y0;
 nowTime = epoch2Matlab(nanmean(timeInt(:))); % UTC
 
 % Load wind data from wind station file
-[dnWind,magWind,dirWind] = loadWindNDBC('MetData_NDBC46011.txt', nowTime);
+if nowTime > datenum(2017,09,11,00,00,0)
+    [dnWind,magWind,dirWind] = loadWindNDBC('MetData_NDBC46011.txt', nowTime);
+else
+    [dnWind,magWind,dirWind] = loadWindNDBC('MetData_NDBC46011_historical.txt', nowTime);
+end
 
 % Load wave data from wave station file
-[dnWaves,Hs,dirWaves] = loadWavesNDBC('WaveData_NDBC46011.txt');
-
+if nowTime > datenum(2017,09,11,00,00,0)
+    [dnWaves,Hs,dirWaves] = loadWavesNDBC('WaveData_NDBC46011.txt');
+else
+    [dnWaves,Hs,dirWaves] = loadWavesNDBC_historical('WaveData_NDBC46011_historical.txt');
+end
+    
 % Load tide data from tide station file
 % [dnTides,waterSurfaceElevation] = loadTidesNOAA('TideData_NOAA9411406.txt');
 [waterSurfaceElevation,dnTides] = loadXTide('Arguello_Point_Sep3_2mos.txt');
