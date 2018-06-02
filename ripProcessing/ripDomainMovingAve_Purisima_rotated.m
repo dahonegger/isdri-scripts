@@ -6,13 +6,8 @@ addpath(genpath('C:\Data\ISDRI\isdri-scripts'));
 addpath(genpath('C:\Data\ISDRI\cBathy'));
 
 %% define time of interest
-<<<<<<< HEAD
-startTime = '20171020_1430';
-endTime = '20171020_2030';
-=======
 startTime = '20171020_1200';
 endTime = '20171021_0000';
->>>>>>> ripProcessing
 
 Hub = 'E';
 baseDir = [Hub ':\purisima\processed\'];
@@ -22,12 +17,8 @@ mkdir(saveFolder)
 
 %% define figure parameters
 colorAxisLimits = [75 170];
-<<<<<<< HEAD
-XYLimits = [707 720 3842 3856];
-=======
 % XYLimits = [707 720 3842 3856];
-XYLimits = [-2000 -500 5000 -1000];
->>>>>>> ripProcessing
+XYLimits = [-2500 -350; -1000 5000];
 
 %% make list of cubes
 dataFolder = [baseDir startTime(1:4) '-' startTime(5:6)...
@@ -68,76 +59,46 @@ enddn = datenum([str2num(endTime(1:4)),str2num(endTime(5:6)),...
 cubeList = cubeListAll(firstFileIndex:lastFileIndex);
 
 %% Load data from 512 rotation runs
-<<<<<<< HEAD
-=======
-rotation = 
->>>>>>> ripProcessing
+rotation = 18;
 imgNum = 1;
 for i = 1:length(cubeList)
     % Load radar data
     cubeName = [cubeList(i).folder '\' cubeList(i).name]; dayNum = str2num(cubeList(i).name(14:16));
-    load(cubeName,'Azi','Rg','results','data','timeInt')
+    load(cubeName,'Azi','Rg','results','timex','timeInt')
     
     % define time vector
     timeVec = mean(timeInt);
     
-    % Convert to world coordinates
-    [AZI,RG] = meshgrid(Azi,Rg);
-    TH = pi/180*(90-AZI-results.heading);
-    [xdom,ydom] = pol2cart(TH,RG);
-<<<<<<< HEAD
-    xdom = xdom + results.XOrigin;
-    ydom = ydom + results.YOrigin;
-=======
-%     xdom = xdom + results.XOrigin;
-%     ydom = ydom + results.YOrigin;
->>>>>>> ripProcessing
-    
-    ii = 1;
-    if size(data,3) == 64
-        timexCell{1} = mean(data,3);
-        timeIntCell{1} = mean(timeInt(1,:));
-    elseif size(data,3) > 64*2
-        for i = 1:64:(floor(size(data,3)/64))*64 - 64
-            timexCell{ii} = double(mean(data(:,:,i:i+64),3));
-            timeIntCell{ii} = timeInt(1,i:i+64);
-            [path,fname,ext] = fileparts(pngFile);
-            tmp = datestr(epoch2Matlab(mean(timeIntCell{ii})),'HHMM');
-            fname = [fname(1:17),tmp,'_pol_timex'];
-            ii = ii+1;
-        end
-    end
-    
-    %% add joe calentoni's instrument location
-    lat = 34.7785;
-    lon = -120.6642;
-    [UTMN,UTME,UTMZ] = ll2UTM(lat,lon);
-    
+    % set up domain
+        heading = results.heading-rotation;
+        [AZI,RG] = meshgrid(Azi,Rg(18:end));
+        
+        % interpolate onto a smaller cartesian grid
+        xC = XYLimits(2,1):XYLimits(2,2);
+        yC = XYLimits(1,1):XYLimits(1,2);
+        [XX,YY] = meshgrid(yC,xC);
+        [thC,rgC] = cart2pol(XX,YY);
+        aziC = wrapTo360(90 - thC*180/pi - heading);
+        scanClipped = timex(18:end,:);
+        tC = interp2(AZI,RG,scanClipped,aziC',rgC');
+
     % make .pngs
-    for IMAGEINDEX = 1:numel(timexCell)
-        timex = timexCell{IMAGEINDEX}';
-        timeInt = timeIntCell{IMAGEINDEX};
-        t_dv = datevec(epoch2Matlab(timeInt));
+        t_dv = datevec(epoch2Matlab(mean(timeInt(1,:))));
         
         fig = figure('visible','off');
         fig.PaperUnits = 'inches';
         fig.PaperPosition = [0 0 6 6];
-<<<<<<< HEAD
-        pcolor(xdom/1000,ydom/1000,timex');
-        hold on
-        plot(UTME/1000,UTMN/1000,'b*')
-=======
 %         pcolor(xdom/1000,ydom/1000,timex');
-        pcolor(xdom,ydom,timex');
+        pcolor(XX,YY,tC');
         hold on
 %         plot(UTME/1000,UTMN/1000,'b*')
->>>>>>> ripProcessing
         shading interp
         axis image
         colormap(hot)
+        colorbar
         caxis(colorAxisLimits)
-        axis(XYLimits)
-        xlabel('Eastings (km)');ylabel('Northings (km)');
+        axis([XYLimits(1,1) XYLimits(1,2) XYLimits(2,1) XYLimits(2,2)])
+        xlabel('Cross-shore x (m)');ylabel('Alongshore y (m)');
         ttl = sprintf('%d%02i%d%s%d%s%02i%s%02i%s', t_dv(1), t_dv(2), t_dv(3), ' - ',...
             t_dv(4), ':', t_dv(5), ':', round(t_dv(6)), ' UTC');
         title(ttl)
@@ -147,7 +108,7 @@ for i = 1:length(cubeList)
 
         close all
         clear ttl ttlFig
-    end
+%     end
     clear Azi Rg results data timex timeInt t_dv t_dn tC
 end
 

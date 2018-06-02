@@ -1,4 +1,8 @@
-function cube2png_guadalupe_enviro_rips(cubeFile,pngFile)
+function cube2png_guadalupe_currentVecs(cubeFile,pngFile,...
+                        dnWind,magWindAll,dirWindAll,...
+                        dnWaves,Hs,...
+                        dnTides,waterSurfaceElevation,...
+                        dnUTC_AQ,U,V)
 % Originally 'cube2timex.m' by David Honegger
 % Updated by Alex Simpson to show tide, wind, discharge data
 % Updated by Annika O'Dea to show waves instead of discharge at the
@@ -7,7 +11,7 @@ function cube2png_guadalupe_enviro_rips(cubeFile,pngFile)
 
 % User options: leave empty [] for Matlab auto-sets
 colorAxLimits           = [10 220]; % This gets updated for bad data periods (~May 28-30)
-axisLimits              = [-1200 -500 -800 800]; % in meters
+axisLimits              = [-1500 -500 -800 800]; % in meters
 plottingDecimation      = [5 1]; % For faster plotting, make this [2 1] or higher
 
 % User overrides: leave empty [] otherwise
@@ -33,7 +37,7 @@ heading = results.heading-rotation;
 
 % interpolate onto a smaller cartesian grid
 xC = -800:800;
-yC = -1200:-500;
+yC = -1500:-500;
 [XX,YY] = meshgrid(yC,xC);
 [thC,rgC] = cart2pol(XX,YY);
 aziC = wrapTo360(90 - thC*180/pi - heading);
@@ -100,24 +104,24 @@ aziJMC = aziJM - rotation;
 thJMC = pi/180*(90 - aziJMC - results.heading);
 [xJMC,yJMC] = pol2cart(thJMC,rgJM);
 
-nowTime = epoch2Matlab(nanmean(timeInt(:))); % UTC
-
-% Load wind data from wind station file
-[dnWind,magWind,dirWind] = loadWindNDBC('MetData_NDBC46011.txt', nowTime);
-dirWindR = dirWind - rotation; % rotate wind to be consistent with rotated domain
-
-% Load wave data from wave station file
-[dnWaves,Hs,dirWaves,~,~] = loadWavesNDBC_historical('WaveData_NDBC46011.txt');
-
-% Load tide data from tide station file
-[dnTides,waterSurfaceElevation] = loadTidesNOAA('TideData_NOAA9411406.txt');
-waterSurfaceElevation(waterSurfaceElevation == -999) = nan;
 
 for IMAGEINDEX = 1:numel(timexCell)
     timex = timexCell{IMAGEINDEX}';
     timeInt = timeIntCell{IMAGEINDEX};
     pngFile = pngFileCell{IMAGEINDEX};
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Plot! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    % define wind and velocity
+    nowTime = epoch2Matlab(nanmean(timeInt(:))); % UTC
+    UNow = interp1(dnUTC_AQ, U, nowTime);
+    VNow = interp1(dnUTC_AQ, V, nowTime);
+    vMag = sqrt(UNow^2 + VNow^2);
+
+    dirWind = interp1(dnWind, dirWindAll, nowTime);
+    magWind = interp1(dnWind, magWindAll, nowTime);
+    dirWindR = dirWind - rotation; % rotate wind to be consistent with rotated domain
+    
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Plot! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % setup
     fig = figure('visible','off');
     fig.PaperUnits = 'inches';
@@ -140,6 +144,8 @@ for IMAGEINDEX = 1:numel(timexCell)
     axis image
     colormap(hot)
     plot(xJMC,yJMC,'b.','MarkerSize',20)
+    arrow([xJMC(2) yJMC(2)],[(UNow*1000+xJMC(2)) (VNow*1000+yJMC(2))],...
+        'Length',7,'Width',30*vMag,'tipangle',30,'facecolor','white','edgecolor','white');
     if ~isempty(axisLimits)
         axis(axisLimits)
     end

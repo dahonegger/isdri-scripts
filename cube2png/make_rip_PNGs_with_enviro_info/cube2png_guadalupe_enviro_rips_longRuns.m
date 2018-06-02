@@ -1,4 +1,4 @@
-function cube2png_guadalupe_enviro_rips(cubeFile,pngFile)
+function cube2png_guadalupe_enviro_rips_longRuns(cubeFile,pngFile)
 % Originally 'cube2timex.m' by David Honegger
 % Updated by Alex Simpson to show tide, wind, discharge data
 % Updated by Annika O'Dea to show waves instead of discharge at the
@@ -18,7 +18,7 @@ userOriginLonLat        = [];   % Use these lat-lon origin coords
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LOAD DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Load radar data
-load(cubeFile,'Azi','Rg','results','timex','timeInt') % 6/16/17 with new process scheme, 'timex' available
+load(cubeFile,'Azi','Rg','results','timex','timeInt','data') % 6/16/17 with new process scheme, 'timex' available
 % [a, MSGID] = lastwarn();warning('off', MSGID);
 if ~exist('timex','var') || isempty(timex)
     load(cubeFile,'data')
@@ -39,20 +39,9 @@ yC = -1200:-500;
 aziC = wrapTo360(90 - thC*180/pi - heading);
 
 % Handle long runs (e.g. 18 minutes
+
 ii = 1;
-if size(timeInt,2) == 64
-    if ~exist('timex','var') || isempty(timex)
-        load(cubeFile,'data')
-        timex = double(nanmean(data,3));
-    else
-    end
-    tC = interp2(AZI,RG,double(timex(16:668,:)),aziC',rgC');
-    timexCell{1} = tC;
-    timeIntCell{1} = mean(timeInt);
-    pngFileCell{1} = pngFile;
-    clear timex
-elseif size(timeInt,2) > 64*2
-    load(cubeFile,'data')
+if size(data,3) > 64*2
     for i = 1:64:(floor(size(data,3)/64))*64 - 64
         tC = interp2(AZI,RG,double(mean(data(16:668,:,i:i+64),3)),aziC',rgC');
         timexCell{ii} = tC;
@@ -65,8 +54,7 @@ elseif size(timeInt,2) > 64*2
         ii = ii+1;
         clear tC
     end
-elseif size(timeInt,2) > 64 && size(timeInt,2) <= 64*2
-    load(cubeFile,'data')
+else
     for i = 1:64:(floor(size(data,3)/64))*64
         tC = interp2(AZI,RG,double(mean(data(16:668,:,i:i+64),3)),aziC',rgC');
         timexCell{ii} = tC;
@@ -81,8 +69,6 @@ elseif size(timeInt,2) > 64 && size(timeInt,2) <= 64*2
     end
 end
 
-if exist('timexCell') == 0 
-else
 
 % find coordinates of MacMahan instruments
 latJM = [34.9826 34.981519 34.981131 34.980439 34.98035 34.985969];
@@ -219,5 +205,5 @@ for IMAGEINDEX = 1:numel(timexCell)
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SAVE & CLOSE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     print(fig,'-dpng','-r100',pngFile)
     close(fig)
-end
+    
 end

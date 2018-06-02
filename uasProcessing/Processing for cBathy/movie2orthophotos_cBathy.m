@@ -4,11 +4,11 @@ tic
 addpath(genpath('C:\Users\user\Desktop\UAV-Processing-Toolbox')) %wherever repository is cloned
 addpath(genpath('C:\Data\isdri\isdri-scripts')) %wherever repository is cloned
 
-baseFolder = 'F:\uasData\09.11.17 Guadalupe (rips)\';
-pngFolder = 'F:\uasData\09.11.17 Guadalupe (rips)\orthonormal\';
-fname = 'DJI_0046.MP4';
-airDataFile = 'F:\uasData\Full_AirData_Archive\2017-09-11_16-25-59_Standard.csv';
-videoStartGuess = datenum('09/11/2017 23:37','mm/dd/yyyy HH:MM'); %approx, to closest minute, get from video properties
+baseFolder = 'F:\uasData\09.12.17 Guadalupe Dunes (IW+rip)\';
+pngFolder = 'F:\uasData\09.12.17 Guadalupe Dunes (IW+rip)\orthonormal\';
+fname = 'DJI_0067.MP4';
+airDataFile = 'F:\uasData\Full_AirData_Archive\2017-09-12_15-34-32_Standard.csv';
+videoStartGuess = datenum('09/12/2017 22:48','mm/dd/yyyy HH:MM'); %UTC, approx to closest minute, get from video properties
 savePNGS = 1; %want to make PNGs? 1=yes
 addpath(genpath(baseFolder)) %wherever footage lives, e.g. HUB 1 or 2
 
@@ -30,6 +30,7 @@ roll = 0;
 
 Lat = airData.latitude(frameIndex);
 Lon =airData.longitude(frameIndex);
+[N E] = ll2UTM(Lat,Lon);
 time = airData.datetime(frameIndex); %in case this is 2nd or 3rd video
 
 extrinsicParams.Lat = Lat;
@@ -42,11 +43,11 @@ extrinsicParams.roll = roll;
 Xcam = 0; Ycam = 0; %
 beta = [Xcam Ycam Zcam azimuth tilt roll]; %radians
 % set bounds around camera "origin" that frame should extend
-Xmin = Xcam - 0;
-Xmax = Xcam + 400;
-Ymin = Ycam - 400;
-Ymax = Ycam + 200;
-xy = [Xmin .1 Xmax Ymin .1 Ymax];
+Xmin = Xcam - 50;
+Xmax = Xcam + 50;
+Ymin = Ycam - 80;
+Ymax = Ycam + 80;
+xy = [Xmin .05 Xmax Ymin .05 Ymax];
 
 %% PREP INTRINSIC PARAMS (SPECIFIC TO SHOOTING MODE)
 % PICK THE PATH TO THE RIGHT SHOOTING MODE, EACH FOLDER CONTAINS A UNIQUE
@@ -98,14 +99,15 @@ for jj = 1:numberOfFrames
         if savePNGS == 1
         fig=figure; hold on
         set(gcf,'visible','on')
-        imagesc(x,y,uint8((flipud(Irect)))); %imagesc needs 3 layers(r,g,b) in uint8 format
+        imagesc((x+E)/1000,(y+N)/1000,uint8((flipud(Irect)))); %imagesc needs 3 layers(r,g,b) in uint8 format
         title([datestr(frameTimes(whichFrame))])
-        xlabel('X [meters]');ylabel('Y [meters]');
+        xlabel('E [km]');ylabel('N [km]');
         axis image
         fig.PaperUnits = 'inches';
         fig.PaperPosition = [0 0 3 3];
         saveName = datestr(frameTimes(whichFrame),'mmddyy HH.MM.SS.FFF'); %make sure there are milliseconds
         print([pngFolder,saveName,'.png'],'-dpng','-r300')
+        savefig([pngFolder,saveName,'.fig'])
         close all
         
         else 

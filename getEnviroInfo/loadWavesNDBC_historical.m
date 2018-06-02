@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 function [dnWaves,Hs,dirWaves, TpAve, TpSwell] = loadWavesNDBC(fname)
+=======
+function [dnWaves,Hs,dirWaves, TpAve, TpSwell] = loadWavesNDBC_historical(fname)
+>>>>>>> ripProcessing
 %loadWindNDBC loads and reads .txt file of NDBC met data
 %   file e.g. http://www.ndbc.noaa.gov/data/realtime2/44039.spec
 
@@ -13,7 +17,11 @@ function [dnWaves,Hs,dirWaves, TpAve, TpSwell] = loadWavesNDBC(fname)
     %   TpS: Swell period
     
 % Alex Simpson 6/17/17
+<<<<<<< HEAD
 % Adapted for wave data by Annika O'Dea 9/17/2107
+=======
+% Adapted for wave data by Annika O'Dea 9/17/17
+>>>>>>> ripProcessing
 
 fid=fopen(fname);
 for i = 1:2
