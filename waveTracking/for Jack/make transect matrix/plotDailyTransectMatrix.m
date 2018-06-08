@@ -2,7 +2,7 @@
 % 9/22/2017
 
 clear all; close all; 
-
+load('2017-09-10_timestack.mat')
 % baseDir = 'E:\guadalupe\postprocessed\dailyTransectMatrix\';
 % 
 % files = dir(fullfile(baseDir,'2017-*'));

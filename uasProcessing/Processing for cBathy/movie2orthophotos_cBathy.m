@@ -4,11 +4,11 @@ tic
 addpath(genpath('C:\Users\user\Desktop\UAV-Processing-Toolbox')) %wherever repository is cloned
 addpath(genpath('C:\Data\isdri\isdri-scripts')) %wherever repository is cloned
 
-baseFolder = 'F:\uasData\09.12.17 Guadalupe Dunes (IW+rip)\';
-pngFolder = 'F:\uasData\09.12.17 Guadalupe Dunes (IW+rip)\orthonormal\';
-fname = 'DJI_0067.MP4';
-airDataFile = 'F:\uasData\Full_AirData_Archive\2017-09-12_15-34-32_Standard.csv';
-videoStartGuess = datenum('09/12/2017 22:48','mm/dd/yyyy HH:MM'); %UTC, approx to closest minute, get from video properties
+baseFolder = 'E:\UAV_Footage\09.12.17 Guadalupe Dunes (IW+rip)';
+pngFolder = 'E:\UAV_Footage\09.12.17 Guadalupe Dunes (IW+rip)';
+fname = 'DJI_0030.MP4';
+airDataFile = 'E:\UAV_Footage\Full_AirData_Archive\2017-09-12_14-58-54_Standard.csv';
+videoStartGuess = datenum('09/12/2017 22:13','mm/dd/yyyy HH:MM'); %UTC, approx to closest minute, get from video properties
 savePNGS = 1; %want to make PNGs? 1=yes
 addpath(genpath(baseFolder)) %wherever footage lives, e.g. HUB 1 or 2
 
@@ -43,10 +43,10 @@ extrinsicParams.roll = roll;
 Xcam = 0; Ycam = 0; %
 beta = [Xcam Ycam Zcam azimuth tilt roll]; %radians
 % set bounds around camera "origin" that frame should extend
-Xmin = Xcam - 50;
-Xmax = Xcam + 50;
-Ymin = Ycam - 80;
-Ymax = Ycam + 80;
+Xmin = Xcam - 100;
+Xmax = Xcam + 100;
+Ymin = Ycam - 100;
+Ymax = Ycam + 100;
 xy = [Xmin .05 Xmax Ymin .05 Ymax];
 
 %% PREP INTRINSIC PARAMS (SPECIFIC TO SHOOTING MODE)
@@ -55,7 +55,7 @@ xy = [Xmin .05 Xmax Ymin .05 Ymax];
 % paramPath = 'E:\uasData\calibrationParams\4x3_photo';
 % paramPath = 'E:\uasData\calibrationParams\16x9_photo';
 % paramPath = 'E:\uasData\calibrationParams\3840x2160_video';
-paramPath = 'F:\uasData\calibrationParams\4096x2160_video';
+paramPath = 'E:\UAV_Footage\calibrationParams\4096x2160_video';
 
 lcp = makeLCPFromCaltech(paramPath);
 
@@ -99,7 +99,9 @@ for jj = 1:numberOfFrames
         if savePNGS == 1
         fig=figure; hold on
         set(gcf,'visible','on')
-        imagesc((x+E)/1000,(y+N)/1000,uint8((flipud(Irect)))); %imagesc needs 3 layers(r,g,b) in uint8 format
+%         imagesc((x+E)/1000,(y+N)/1000,uint8((flipud(Irect)))); %imagesc needs 3 layers(r,g,b) in uint8 format
+                imagesc((x),(y),uint8((flipud(Irect)))); %imagesc needs 3 layers(r,g,b) in uint8 format
+
         title([datestr(frameTimes(whichFrame))])
         xlabel('E [km]');ylabel('N [km]');
         axis image
