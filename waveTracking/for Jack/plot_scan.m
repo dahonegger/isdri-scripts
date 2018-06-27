@@ -10,6 +10,26 @@ TH = pi/180*(90-AZI-results.heading);
 x0 = results.XOrigin;     % for UTC
 y0 = results.YOrigin;
 
+
+if (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 < 142
+    timexCell{1} = timex;
+    timeIntCell{1} = mean(timeInt);
+    pngFileCell{1} = pngFile;
+elseif (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 > 142
+    load(cubeFile,'data')
+    ii = 1;
+    for i = 1:64:(floor(size(data,3)/64))*64 - 64
+        timexCell{ii} = double(mean(data(:,:,i:i+64),3));
+        timeIntCell{ii} = timeInt(1,i:i+64);
+        [path,fname,ext] = fileparts(pngFile);
+        tmp = datestr(epoch2Matlab(mean(timeIntCell{ii})),'HHMM');
+        fname = [fname(1:17),tmp,'_pol_timex'];
+        pngFileCell{ii} = fullfile(path,[fname,ext]);
+        ii = ii+1;
+    end
+end
+
+
 % xdom = (xdom + x0);
 % ydom = (ydom + y0);
 
