@@ -5,7 +5,7 @@ clear all; close all;
 %method = 2 for azi-integrated function fitting
 
 addpath(genpath('C:\Data\isdri\isdri-scripts'))
-folder = dir('D:\guadalupe\processed\2017-09-12\*.mat');
+folder = dir('D:\guadalupe\processed\2017-09-10\*.mat');
 
 %% Buoy Data
 % Oceanus Array
@@ -49,10 +49,10 @@ end
 
 %% loop through mat files
 timexCount = 1;
-for matFileIdx = 420:numel(folder) %loop through mat files
+for matFileIdx = 370:numel(folder) %loop through mat files
     baseName = folder(matFileIdx).name;
     pngFile = baseName;
-    load(fullfile('D:\guadalupe\processed\2017-09-12',baseName));
+    load(fullfile('D:\guadalupe\processed\2017-09-10',baseName));
     
     % Handle long runs (e.g. 18 minutes
     if (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 < 142
@@ -145,14 +145,14 @@ for matFileIdx = 420:numel(folder) %loop through mat files
         end
         
         figure; hold on;
-        set(gcf,'visible','off')
+%         set(gcf,'visible','off')
         plot(RgCrop,int_over_azi,'.k')
         plot(RgCrop,timexRgFunction,'-r')
         box on; axis tight;
         xlabel('Range [m]')
         ylabel('I')
         title(datestr(epoch2Matlab(timeInt(1))))
-        print(['D:\guadalupe\postprocessed\rangeFalloffExperiment\Frame_Rg_Functions\',pngFile,'.png'],'-dpng','-r500')
+%         print(['D:\guadalupe\postprocessed\rangeFalloffExperiment\Frame_Rg_Functions\',pngFile,'.png'],'-dpng','-r500')
 
         
 %         subplot(2,2,3); hold on;
@@ -180,6 +180,10 @@ for matFileIdx = 420:numel(folder) %loop through mat files
             [rowOc_tmp, colOc_tmp] = find(D==min(D(:)));
             rowOc(i) = rowOc_tmp; colOc(i) = colOc_tmp;
             colOc(i) = colOc(i)+4; %shift location by 3 azi to move off buoy reflection
+            if i == 1
+                rowOc(i) = rowOc(i)-6;
+                colOc(i) = colOc(i)-2;
+            else; end
             if i == 8
                 rowOc(i) = rowOc(i)-20;
             else; end
@@ -217,7 +221,7 @@ for matFileIdx = 420:numel(folder) %loop through mat files
         
 %% plot
         figure;hold on
-        set(gcf,'visible','off')
+%         set(gcf,'visible','off')
         % pcolor(xdom,ydom,timex)
         % pcolor(xdom(330:end,60:end-60),ydom(330:end,60:end-60),timex(330:end,60:end-60)); shading interp; colormap hot;axis image;
         pcolor(xdomCrop,ydomCrop,timexCropNorm2)
@@ -258,7 +262,7 @@ for matFileIdx = 420:numel(folder) %loop through mat files
         clear pngFileCell;
     
         close all
-        disp([num2str(timexCount),' out of ',num2str(numel(folder)-420),' done.'])
+        disp([num2str(timexCount),' out of ',num2str(numel(folder)-370),'370 done.'])
 end
 
-save('buoyIntensities_9.12.mat','buoyIntensities')
+save('buoyIntensities_9.10.mat','buoyIntensities')
