@@ -1,16 +1,21 @@
 close all; clear all;
-tic
+
 %% USER DEFINED PARAMETERS
-addpath(genpath('C:\Users\user\Desktop\UAV-Processing-Toolbox')) %wherever repository is cloned
+
+addpath(genpath('C:\Users\user\Desktop\UAV-Processing-Toolbox')) %wherever github repository is cloned
 addpath(genpath('C:\Data\isdri\isdri-scripts')) %wherever repository is cloned
 
-baseFolder = 'E:\UAV_Footage\09.12.17 Guadalupe Dunes (IW+rip)';
-pngFolder = 'E:\UAV_Footage\09.12.17 Guadalupe Dunes (IW+rip)';
-fname = 'DJI_0030.MP4';
-airDataFile = 'E:\UAV_Footage\Full_AirData_Archive\2017-09-12_14-58-54_Standard.csv';
-videoStartGuess = datenum('09/12/2017 22:13','mm/dd/yyyy HH:MM'); %UTC, approx to closest minute, get from video properties
+baseFolder = 'Y:\RADAR_DATA\usrs\ctr\uas\Footage\Ebb_Front\Nadir\Stationary'; %where movie lives
+pngFolder = 'Y:\RADAR_DATA\usrs\ctr\uas\Footage\Ebb_Front\Nadir\test_pngs'; %where pngs will save
+fname = '20171772120.MOV'; %movie file name
+% note: airDataFile names are typically in local time. Open and look at 'datetime (utc)' column to check
+airDataFile = 'Y:\RADAR_DATA\usrs\ctr\uas\Flight_Data\CTR_AirData\2017-06-26_17-12-42_Standard.csv'; % START TIME OF FILE MUST PRECEED VIDEO START TIME
+videoStartGuess = datenum('06/26/2017 21:20','mm/dd/yyyy HH:MM'); %UTC, approx to closest minute, get from video properties
 savePNGS = 1; %want to make PNGs? 1=yes
-addpath(genpath(baseFolder)) %wherever footage lives, e.g. HUB 1 or 2
+addpath(genpath(baseFolder)) 
+
+% USER MUST EDIT FRAME SIZE IN EXTRINISCS SECTION
+% USER MUST ASSIGN CORRECT FRAME SIZE CALIB RESULTS IN INTRINSICS SECTION
 
 %% GET AIRDATA PARAMS
 %this gets info for first video frame (when isVideo switches to 1) 
@@ -42,12 +47,14 @@ extrinsicParams.roll = roll;
 %% PREP EXTRINSIC PARAMS
 Xcam = 0; Ycam = 0; %
 beta = [Xcam Ycam Zcam azimuth tilt roll]; %radians
-% set bounds around camera "origin" that frame should extend
+
+% USER: set bounds around camera "origin" that frame should extend
 Xmin = Xcam - 100;
 Xmax = Xcam + 100;
 Ymin = Ycam - 100;
 Ymax = Ycam + 100;
-xy = [Xmin .05 Xmax Ymin .05 Ymax];
+gridCellSize = 0.05; %meters
+xy = [Xmin gridCellSize Xmax Ymin gridCellSize Ymax];
 
 %% PREP INTRINSIC PARAMS (SPECIFIC TO SHOOTING MODE)
 % PICK THE PATH TO THE RIGHT SHOOTING MODE, EACH FOLDER CONTAINS A UNIQUE
@@ -55,7 +62,9 @@ xy = [Xmin .05 Xmax Ymin .05 Ymax];
 % paramPath = 'E:\uasData\calibrationParams\4x3_photo';
 % paramPath = 'E:\uasData\calibrationParams\16x9_photo';
 % paramPath = 'E:\uasData\calibrationParams\3840x2160_video';
-paramPath = 'E:\UAV_Footage\calibrationParams\4096x2160_video';
+% paramPath = 'E:\UAV_Footage\calibrationParams\4096x2160_video';
+
+paramPath = 'Z:\bulls\3840×2160_video';
 
 lcp = makeLCPFromCaltech(paramPath);
 
@@ -125,5 +134,5 @@ for jj = 1:numberOfFrames
     clear('layer1','layer2','layer3');
 
 end
-toc
+
 

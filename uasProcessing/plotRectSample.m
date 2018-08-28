@@ -1,9 +1,23 @@
-% load('C:\Users\user\Desktop\20171791107_rect_part1.mat');
+load('20171791102_0_thru_4.mat');
+
+
 addpath('C:\Data\isdri\isdri-scripts\util')
 % reconstruct first frame from RGB layers
+
+
 frame1(:,:,1)=layer1(:,:,1);
 frame1(:,:,2)=layer2(:,:,1);
 frame1(:,:,3)=layer3(:,:,1);
+
+layer1_avg = mean(layer1,3);
+layer2_avg = mean(layer2,3);
+layer3_avg = mean(layer3,3);
+
+frame(:,:,1)=layer1_avg(:,:,1);
+frame(:,:,2)=layer2_avg(:,:,1);
+frame(:,:,3)=layer3_avg(:,:,1);
+
+figure;imagesc(x,y,uint8(frame)); axis image
 
 % plot on x,y grid
 figure(1); hold on
@@ -18,8 +32,10 @@ axis image
 [ECam,NCam]=deg2utm(extrinsicParams.Lat,extrinsicParams.Lon); %convert camera location to UTM (meters)
 Eastings = X+ECam; %add camera location to grid
 Northings = Y+NCam;
-[Lat,Lon] = UTM2ll(Northings,Eastings,10); %convert back to lat lon
-
+[LAT,LON] = UTM2ll(Northings,Eastings,18); %convert back to lat lon
+lat = LAT(:,1);lon = LON(1,:);
+[kmlstr]=ge_imagesc(lon,lat,Irect(1:10:end,1:10:end,1));
+ge_output(['test.kml'],kmlstr)
 % plot on UTM grid
 figure(2); hold on
 pcolor(Eastings,Northings,frame1(:,:,1)); shading interp;

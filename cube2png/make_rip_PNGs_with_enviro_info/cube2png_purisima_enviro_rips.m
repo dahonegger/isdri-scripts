@@ -1,4 +1,4 @@
-function cube2png_guadalupe_enviro(cubeFile,pngFile)
+function cube2png_purisima_enviro_rips(cubeFile,pngFile)
 % Originally 'cube2timex.m' by David Honegger 
 % Updated by Alex Simpson to show tide, wind, discharge data 
 % Updated by Annika O'Dea to show waves instead of discharge at the
@@ -6,8 +6,8 @@ function cube2png_guadalupe_enviro(cubeFile,pngFile)
 % 9/17/2017
 
 % User options: leave empty [] for Matlab auto-sets
-colorAxLimits           = [75 200]; 
-axisLimits              = [-13 6 -13 13]; % Full, In kilometers
+colorAxLimits           = [0 150]; % This gets updated for bad data periods (~May 28-30)
+axisLimits              = [-6 2 -6 6]; % Full, In kilometers
 plottingDecimation      = [5 1]; % For faster plotting, make this [2 1] or higher
 
 % User overrides: leave empty [] otherwise
@@ -18,7 +18,7 @@ userOriginLonLat        = [];   % Use these lat-lon origin coords
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LOAD DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Load radar data
-load(cubeFile,'Azi','Rg','results','timex','timeInt','daqConfig') % 6/16/17 with new process scheme, 'timex' available
+load(cubeFile,'Azi','Rg','results','timex','timeInt') % 6/16/17 with new process scheme, 'timex' available
 % [a, MSGID] = lastwarn();warning('off', MSGID);
 
 if ~exist('timex','var') || isempty(timex)
@@ -30,14 +30,8 @@ if ~exist('timex','var') || isempty(timex)
 else
 end
 
-if ~exist('timex','var') || isempty(timex)
-else
-
-% shift using gate delay
-shift = daqConfig.gateDelay + 126; %-126 is gateDelay of GOOD scans
-if shift <= 0; shift = 0; end
-Rg = Rg(1:end-shift);
-timex = timex(shift+1:end,:);
+% if ~exist('timex','var') || isempty(timex)
+% else
     
    
 % Implement user overrides
@@ -73,18 +67,16 @@ nowTime = epoch2Matlab(nanmean(timeInt(:))); % UTC
 [dnWind,magWind,dirWind] = loadWindNDBC('MetData_NDBC46011.txt', nowTime);
 
 % Load wave data from wave station file
-if nowTime <= datenum('09/24/2017 00:00','mm/dd/yyyy HH:MM')
-    [dnWaves,Hs,dirWaves] = loadWavesNDBC_historical('WaveData_NDBC46011_historical.txt');
-else
-    [dnWaves,Hs,dirWaves] = loadWavesNDBC('WaveData_NDBC46011.txt');
-end
-
+[dnWaves,Hs,dirWaves] = loadWavesNDBC('WaveData_NDBC46011.txt');
 [tmp tmp] = min(abs(dnWaves-nowTime));
 dirWaves = dirWaves(tmp);
 % Load tide data from tide station file
 % [dnTides,waterSurfaceElevation] = loadTidesNOAA('TideData_NOAA9411406.txt');
 % waterSurfaceElevation(waterSurfaceElevation == -999) = nan;
-[waterSurfaceElevation,dnTides] = loadXTide('Arguello_Point_Sep3_2mos.txt');
+% [waterSurfaceElevation,dnTides] = loadXTide('Arguello_Point_Sep3_2mos.txt');
+% Load tide data from tide station file
+[dnTides,waterSurfaceElevation] = loadTidesNOAA('TideData_NOAA9411406.txt');
+waterSurfaceElevation(waterSurfaceElevation == -999) = nan;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Plot! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % setup
@@ -128,7 +120,7 @@ titleLine2 = sprintf('\\makebox[4in][c]{%s UTC (%s PDT)}',datestr(epoch2Matlab(n
 title({titleLine1,titleLine2},...
 'fontsize',14,'interpreter','latex');
 % xlim([-7 7]); ylim([-7 7])
-% caxis([75 225])
+caxis([75 225])
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TIDE SIGNAL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 set(fig,'currentaxes',axTide)
 cla(axTide)
@@ -201,8 +193,8 @@ ycircle = sin(th);
 plot(axDir,xcircle,ycircle,'-k','linewidth',1.25);hold on
 % plot(axWind,.75*xcircle,.75*ycircle,'-','color',[.5 .5 .5],'linewidth',1.25)
 axis image;axis([-1.05 1.05 -1.05 1.05])
-[uWind vWind] = pol2cart((90-dirWaves)*pi/180, 1); 
-arrow([uWind vWind],[0 0],'baseangle',45,'width',Hs,'tipangle',25,'facecolor','blue','edgecolor','blue');
+[uWave vWave] = pol2cart((90-dirWaves)*pi/180, 1); 
+arrow([uWave vWave],[0 0],'baseangle',45,'width',Hs,'tipangle',25,'facecolor','blue','edgecolor','blue');
 [uText vText] = pol2cart((90-180-dirWaves)*pi/180,0.28); %position text off tip of arrow
 % text(uText,vText,[num2str(round(Hs,1)),' m/s'],'horizontalalignment','center','interpreter','latex')
 box on
