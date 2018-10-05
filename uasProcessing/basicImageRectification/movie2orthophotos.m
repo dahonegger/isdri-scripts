@@ -5,10 +5,10 @@ close all; clear all;
 addpath(genpath('C:\Users\user\Desktop\UAV-Processing-Toolbox')) %wherever github repository is cloned
 addpath(genpath('C:\Data\isdri\isdri-scripts')) %wherever repository is cloned
 
-baseFolder = 'E:\UAV_Footage\09.12.17 Guadalupe Dunes (IW+rip)';
-pngFolder = 'E:\UAV_Footage\09.12.17 Guadalupe Dunes (IW+rip)';
+baseFolder = 'F:\uasData\09.12.17 Guadalupe Dunes (IW+rip)';
+pngFolder = 'F:\uasData\09.12.17 Guadalupe Dunes (IW+rip)';
 fname = 'DJI_0030.MP4';
-airDataFile = 'E:\UAV_Footage\Full_AirData_Archive\2017-09-12_14-58-54_Standard.csv'; %% START TIME OF FILE MUST PRECEED VIDEO START TIME
+airDataFile = 'F:\uasData\Full_AirData_Archive\2017-09-12_14-58-54_Standard.csv'; %% START TIME OF FILE MUST PRECEED VIDEO START TIME
 videoStartGuess = datenum('09/12/2017 22:13','mm/dd/yyyy HH:MM'); %UTC, approx to closest minute, get from video properties
 savePNGS = 0; %want to make PNGs? 1=yes
 addpath(genpath(baseFolder)) %wherever footage lives, e.g. HUB 1 or 2

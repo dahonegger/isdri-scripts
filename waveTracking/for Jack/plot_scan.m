@@ -1,7 +1,7 @@
 close all; clear all;
 
 %% load and prep radar scan
-load('D:\guadalupe\processed\2017-09-10\Guadalupe_20172531815_pol.mat')
+load('D:\guadalupe\processed\2017-09-10\Guadalupe_20172532015_pol.mat')
 addpath('C:\Users\user\Desktop')
 [AZI,RG] = meshgrid(Azi,Rg);
 TH = pi/180*(90-AZI-results.heading);
@@ -11,6 +11,7 @@ x0 = results.XOrigin;     % for UTC
 y0 = results.YOrigin;
 
 
+pngFile = 'tmp';
 if (epoch2Matlab(timeInt(end))-epoch2Matlab(timeInt(1))).*24.*60.*60 < 142
     timexCell{1} = timex;
     timeIntCell{1} = mean(timeInt);
@@ -67,24 +68,24 @@ colormap hot
 axis image
 caxis([0 150])
 % plot oceano array
-plot(X_Oc./1000,Y_Oc./1000,'g.','MarkerSize',20)
+plot(X_Oc./1000,Y_Oc./1000,'g.','MarkerSize',10)
 
 % plot bathy
 depths = [0 -10 -17 -25 -32 -40 -50];
 for i = 1:numel(depths)
     tmp = depths(i);
     for n = find(bathy.z==tmp) 
-       plot(bathy.Xkm{n},bathy.Ykm{n},'color',[.25 .25 .25],'linewidth',1)
+       plot(bathy.Xkm{n},bathy.Ykm{n},'color',[.25 .25 .25],'linewidth',.8)
     end
 end
 % text(0,-11.6,'0m','color',[.25 .25 .25],'interpreter','latex')
 % text(-6.2,-11.6,'-30m','color',[.25 .25 .25],'interpreter','latex')
-text(-8.8,-11.6,'-50m','color',[.25 .25 .25],'interpreter','latex')
+text(-9,-11.6,'-50m','color',[.25 .25 .25],'interpreter','latex')
 % text(-12,-11.6,'-100m','color',[.25 .25 .25],'interpreter','latex')
 
 xlim([-13 5]); ylim([-12 13])
 
-plot(xdom(:,155),ydom(:,155),'-c')
+% plot(xdom(:,155),ydom(:,155),'-c')
 
 runLength = timeInt(end,end)-timeInt(1,1);
 titleLine1 = sprintf('\\makebox[4in][c]{Guadalupe X-band Radar: %2.1f min Exposure}',runLength/60);
