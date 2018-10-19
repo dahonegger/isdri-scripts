@@ -1,123 +1,225 @@
-function [UTMNorthing, UTMEasting, UTMZone] = ll2UTM(Lat, Long, refellip, a, eccSquared)
+function [x,y,f]=ll2utm(varargin)
+%LL2UTM Lat/Lon to UTM coordinates precise conversion.
+%	[X,Y]=LL2UTM2(LAT,LON) or LL2UTM([LAT,LON]) converts coordinates 
+%	LAT,LON (in degrees) to UTM X and Y (in meters). Default datum is WGS84.
+%
+%	LAT and LON can be scalars, vectors or matrix. Outputs X and Y will
+%	have the same size as inputs.
+%
+%	LL2UTM(...,DATUM) uses specific DATUM for conversion. DATUM can be one
+%	of the following char strings:
+%		'wgs84': World Geodetic System 1984 (default)
+%		'nad27': North American Datum 1927
+%		'clk66': Clarke 1866
+%		'nad83': North American Datum 1983
+%		'grs80': Geodetic Reference System 1980
+%		'int24': International 1924 / Hayford 1909
+%	or DATUM can be a 2-element vector [A,F] where A is semimajor axis (in
+%	meters)	and F is flattening of the user-defined ellipsoid.
+%
+%	LL2UTM(...,ZONE) forces the UTM ZONE (scalar integer or same size as
+%   LAT and LON) instead of automatic set.
+%
+%	[X,Y,ZONE]=LL2UTM(...) returns also the computed UTM ZONE (negative
+%	value for southern hemisphere points).
+%
+%
+%	XY=LL2UTM(...) or without any output argument returns a 2-column 
+%	matrix [X,Y].
+%
+%	Note:
+%		- LL2UTM does not perform cross-datum conversion.
+%		- precision is near a millimeter.
+%
+%
+%	Reference:
+%		I.G.N., Projection cartographique Mercator Transverse: Algorithmes,
+%		   Notes Techniques NT/G 76, janvier 1995.
+%
+%	Acknowledgments: Mathieu, Frederic Christen.
+%
+%
+%	Author: Francois Beauducel, <beauducel@ipgp.fr>
+%	Created: 2003-12-02
+%	Updated: 2015-01-29
 
-%  function [UTMNorthing, UTMEasting, UTMZone] = ll2UTM(Lat, Long, refellip, a, eccSquared)
-%
-%	lat = latitude in fraction deg.
-%	lon = longitude in fraction deg. (West of Grenwich are negative!)
-%	refellip = ref. ellipsoid identifier (see refellip_menu.m) %%(now optional if using WGS-84 ellipsoid)
-%	a = Equatorial Radius (optional)
-%	eccSquared = eccentricity squared (optional)
-%
-%	if a and eccSquared are included, then refellip is ignored and a & eccSquared are
-% 	used for the radius and eccentricity squared
-%
-%	utmNorthings = Northings (in fraction meters)
-%	utmEastings = Eastings (or Westings if lon negative) (in fraction meters)
-%	utmZ = zone(s) (ie, 10T). Returns a string if only one lat/lon pair.
-%          Returns a cell array of strings otherwise.
-%
-%	Program to convert lat-lon data to UTM coordinates.
-%	Uses subroutine written by Chuck Gantz downloaded from the
-%	GPSy web site.
-%
-%	Note:  Westings have negative longitudes.
-%
-%   This function has been modified so that when only the lat and long are
-%   input, the WGS-84 ellipsoid (ellipsoid #23) is assumed.  The various
-%   reference ellipsoids can be seen in the CIL routine
-%   /home/ruby/matlab/CIL/ephemeris/ellipsoid.m under the variable name 'enlist'.
-%   C. Paden
-%   10/23/03
 
-%% deg2rad function
-deg2rad = @(deg)deg.*pi./180;
+%	Copyright (c) 2001-2015, François Beauducel, covered by BSD License.
+%	All rights reserved.
+%
+%	Redistribution and use in source and binary forms, with or without 
+%	modification, are permitted provided that the following conditions are 
+%	met:
+%
+%	   * Redistributions of source code must retain the above copyright 
+%	     notice, this list of conditions and the following disclaimer.
+%	   * Redistributions in binary form must reproduce the above copyright 
+%	     notice, this list of conditions and the following disclaimer in 
+%	     the documentation and/or other materials provided with the distribution
+%	                           
+%	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+%	AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+%	IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+%	ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+%	LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+%	CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+%	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+%	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+%	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+%	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+%	POSSIBILITY OF SUCH DAMAGE.
 
+% Available datums
+datums = [ ...
+	{ 'wgs84', 6378137.0, 298.257223563 };
+	{ 'nad83', 6378137.0, 298.257222101 };
+	{ 'grs80', 6378137.0, 298.257222101 };
+	{ 'nad27', 6378206.4, 294.978698214 };
+	{ 'int24', 6378388.0, 297.000000000 };
+	{ 'clk66', 6378206.4, 294.978698214 };
+];
 
-%% Inputs
-if nargin < 5
-    if nargin < 3
-        refellip = 'WGS-84';
-    end
-    [a, eccSquared, ~] = ellipsoid(refellip); % part of radar_toolbox package--not from Mapping Toolbox.
+% constants
+D0 = 180/pi;	% conversion rad to deg
+K0 = 0.9996;	% UTM scale factor
+X0 = 500000;	% UTM false East (m)
+
+% defaults
+datum = 'wgs84';
+zone = [];
+
+if nargin < 1
+	error('Not enough input arguments.')
 end
 
-%%	lltoutm.c
-%%	14 April 1999
-%%	T. C. Lippmann
+if nargin > 1 && isnumeric(varargin{1}) && isnumeric(varargin{2}) && all(size(varargin{1})==size(varargin{2}))
+	lat = varargin{1};
+	lon = varargin{2};
+	v = 2;
+elseif isnumeric(varargin{1}) && size(varargin{1},2) == 2
+	lat = varargin{1}(:,1);
+	lon = varargin{1}(:,2);
+	v = 1;
+else
+	error('Single input argument must be a 2-column matrix [LAT,LON].')
+end
 
-%%% Replace NaNs with 0s. We'll set these back to NaN later.
-nan_Lat = isnan(Lat);
-nan_Long = isnan(Long);
-Lat(nan_Lat) = 0;
-Long(nan_Long) = 0;
+if all([numel(lat),numel(lon)] > 1) && any(size(lat) ~= size(lon))
+	error('LAT and LON must be the same size or scalars.')
+end
 
-k0 = 0.9996;
+for n = (v+1):nargin
+	% LL2UTM(...,DATUM)
+	if ischar(varargin{n}) || (isnumeric(varargin{n}) && numel(varargin{n})==2)
+		datum = varargin{n};
+	% LL2UTM(...,ZONE)
+	elseif isnumeric(varargin{n}) && (isscalar(varargin{n}) || all(size(varargin{n})==size(lat)))
+			zone = round(varargin{n});
+	else
+		error('Unknown argument #%d. See documentation.',n)
+	end
+end
 
-LatRad = deg2rad(Lat);
-LongRad = deg2rad(Long);
+if ischar(datum)
+	% LL2UTM(...,DATUM) with DATUM as char
+	if ~any(strcmpi(datum,datums(:,1)))
+		error('Unkown DATUM name "%s"',datum);
+	end
+	k = find(strcmpi(datum,datums(:,1)));
+	A1 = datums{k,2};
+	F1 = datums{k,3};	
+else
+	% LL2UTM(...,DATUM) with DATUM as [A,F] user-defined
+	A1 = datum(1);
+	F1 = datum(2);
+end
 
-LongOrigin = zeros(size(Long));
-dy = Long > -6 & Long <= 0;
-LongOrigin(dy) = -3;
-dy = Long < 6 & Long > 0;
-LongOrigin(dy) = 3;
-dy = abs(Long) >= 6;
-LongOrigin(dy) = sign(Long(dy)).*floor(abs(Long(dy))/6)*6 + 3*sign(Long(dy));
-LongOriginRad = deg2rad(LongOrigin);
+p1 = lat/D0;			% Phi = Latitude (rad)
+l1 = lon/D0;			% Lambda = Longitude (rad)
 
-%% compute the UTM Zone from the latitude and longitude*/
+% UTM zone automatic setting
+if isempty(zone)
+	F0 = round((l1*D0 + 183)/6);
+else
+	F0 = zone;
+end
+
+B1 = A1*(1 - 1/F1);
+E1 = sqrt((A1*A1 - B1*B1)/(A1*A1));
+P0 = 0/D0;
+L0 = (6*F0 - 183)/D0;	% UTM origin longitude (rad)
+Y0 = 1e7*(p1 < 0);		% UTM false northern (m)
+N = K0*A1;
+
+C = coef(E1,0);
+B = C(1)*P0 + C(2)*sin(2*P0) + C(3)*sin(4*P0) + C(4)*sin(6*P0) + C(5)*sin(8*P0);
+YS = Y0 - N*B;
+
+C = coef(E1,2);
+L = log(tan(pi/4 + p1/2).*(((1 - E1*sin(p1))./(1 + E1*sin(p1))).^(E1/2)));
+z = complex(atan(sinh(L)./cos(l1 - L0)),log(tan(pi/4 + asin(sin(l1 - L0)./cosh(L))/2)));
+Z = N.*C(1).*z + N.*(C(2)*sin(2*z) + C(3)*sin(4*z) + C(4)*sin(6*z) + C(5)*sin(8*z));
+xs = imag(Z) + X0;
+ys = real(Z) + YS;
+
+% outputs zone if needed: scalar value if unique, or vector/matrix of the
+% same size as x/y in case of crossed zones
 if nargout > 2
-    UTMZone = ll2UTMZone(Lat,Long);
-    %%% Set the zone for any NaN lat/lons to an empty string.
-    if iscell(UTMZone)
-        UTMZone(nan_Lat | nan_Long) = {''};
-    elseif any(nan_Lat | nan_Long)
-        UTMZone = '';
-    end    
+   	f = F0.*sign(lat);
+	fu = unique(f);
+	if isscalar(fu)
+		f = fu;
+	end
 end
 
-%% Compute the Northings and Eastings
-eccPrimeSquared = (eccSquared)./(1-eccSquared);
+if nargout < 2
+	x = [xs(:),ys(:)];
+else
+	x = xs;
+	y = ys;
+end
 
-N = a./sqrt(1-eccSquared.*sin(LatRad).*sin(LatRad));
-T = tan(LatRad).*tan(LatRad);
-C = eccPrimeSquared.*cos(LatRad).*cos(LatRad);
-A = cos(LatRad).*(LongRad-LongOriginRad);
 
-M = a.*((1 - eccSquared/4 - 3*eccSquared*eccSquared/64- 5*eccSquared*eccSquared*eccSquared/256).*LatRad ...
-    - (3*eccSquared/8 + 3*eccSquared*eccSquared/32 + 45*eccSquared*eccSquared*eccSquared/1024).*sin(2*LatRad) ...
-    + (15*eccSquared*eccSquared/256 + 45*eccSquared*eccSquared*eccSquared/1024).*sin(4*LatRad) ...
-    - (35*eccSquared*eccSquared*eccSquared/3072).*sin(6*LatRad));
 
-UTMEasting = (k0.*N.*(A+(1-T+C).*A.*A.*A/6 ...
-    + (5-18.*T+T.*T+72.*C-58.*eccPrimeSquared).*A.*A.*A.*A.*A/120) ...
-    + 500000.0);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function c = coef(e,m)
+%COEF Projection coefficients
+%	COEF(E,M) returns a vector of 5 coefficients from:
+%		E = first ellipsoid excentricity
+%		M = 0 for transverse mercator
+%		M = 1 for transverse mercator reverse coefficients
+%		M = 2 for merdian arc
 
-UTMNorthing = (k0.*(M+N.*tan(LatRad).*(A.*A/2+(5-T+9.*C+4.*C.*C).*A.*A.*A.*A/24 ...
-    + (61-58.*T+T.*T+600.*C-330.*eccPrimeSquared).*A.*A.*A.*A.*A.*A/720)));
 
-dy = find(Lat < 0);
-UTMNorthing(dy) = UTMNorthing(dy) + 10000000.0; %%10000000 meter offset for southern hemisphere*/
+if nargin < 2
+	m = 0;
+end
 
-%%% Restore NaNs.
-UTMNorthing(nan_Lat | nan_Long) = NaN;
-UTMEasting(nan_Lat | nan_Long) = NaN;
+switch m
+	case 0
+	c0 = [-175/16384, 0,   -5/256, 0,  -3/64, 0, -1/4, 0, 1;
+           -105/4096, 0, -45/1024, 0,  -3/32, 0, -3/8, 0, 0;
+           525/16384, 0,  45/1024, 0, 15/256, 0,    0, 0, 0;
+          -175/12288, 0, -35/3072, 0,      0, 0,    0, 0, 0;
+          315/131072, 0,        0, 0,      0, 0,    0, 0, 0];
+	  
+	case 1
+	c0 = [-175/16384, 0,   -5/256, 0,  -3/64, 0, -1/4, 0, 1;
+             1/61440, 0,   7/2048, 0,   1/48, 0,  1/8, 0, 0;
+          559/368640, 0,   3/1280, 0,  1/768, 0,    0, 0, 0;
+          283/430080, 0, 17/30720, 0,      0, 0,    0, 0, 0;
+       4397/41287680, 0,        0, 0,      0, 0,    0, 0, 0];
 
-%
-% Copyright by Oregon State University, 2002
-% Developed through collaborative effort of the Argus Users Group
-% For official use by the Argus Users Group or other licensed activities.
-%
-% $Id: ll2UTM.m,v 1.2 2005/03/24 22:54:06 stanley Exp $
-%
-% $Log: ll2UTM.m,v $
-% Revision 1.2  2005/03/24 22:54:06  stanley
-% moved comment so help works right.
-%
-% Revision 1.1  2004/08/20 20:31:09  stanley
-% Initial revision
-%
-%
-%key coordinate
-%comment  Converts lat/long to UTM
-%
+	case 2
+	c0 = [-175/16384, 0,   -5/256, 0,  -3/64, 0, -1/4, 0, 1;
+         -901/184320, 0,  -9/1024, 0,  -1/96, 0,  1/8, 0, 0;
+         -311/737280, 0,  17/5120, 0, 13/768, 0,    0, 0, 0;
+          899/430080, 0, 61/15360, 0,      0, 0,    0, 0, 0;
+      49561/41287680, 0,        0, 0,      0, 0,    0, 0, 0];
+   
+end
+c = zeros(size(c0,1),1);
+
+for i = 1:size(c0,1)
+    c(i) = polyval(c0(i,:),e);
+end

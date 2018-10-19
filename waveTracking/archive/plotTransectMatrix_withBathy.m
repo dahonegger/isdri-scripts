@@ -8,9 +8,9 @@ startTime = '20170921_1800';
 endTime = '20170922_0700';
 baseDir = 'E:\guadalupe\postprocessed\dailyTransectMatrix\';
 
-contour100_lat = ; contour100_lon = ;
-contour50_lat = ; contour50_lon = ;
-contour30_lat = ; contour30_lon = ;
+% contour100_lat = ; contour100_lon = ;
+% contour50_lat = ; contour50_lon = ;
+% contour30_lat = ; contour30_lon = ;
 
 if strcmp(startTime(7:8),endTime(7:8))
     fn{1} = [baseDir startTime(1:4) '-' startTime(5:6) '-' startTime(7:8) '.mat'];
