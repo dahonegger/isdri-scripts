@@ -14,7 +14,7 @@ addpath(genpath('Y:\shared\simpsale\MATLAB'))
 baseDir = 'D:\guadalupe\processed\';
 saveDir = 'Y:\shared\simpsale\MATLAB\ISDRI\TimeStack_mat_files\';
 
-load([baseDir,'2017-09-14\Guadalupe_20172571939_pol.mat'])
+load([baseDir,'2017-09-10\Guadalupe_20172531939_pol.mat'])
 
 %% azimuth transect = 1, anything else gives interpolate option
 transectType = 1;
@@ -22,7 +22,7 @@ transectType = 1;
 %% for azi index option
 % choose azimuth index
 if transectType == 1
-    desiredAziIdx = 135;
+    desiredAziIdx = 175;
     % now plot to check 
     plotGuad(Azi,Rg,timex,results.heading,results.XOrigin,results.YOrigin)
     [AZI,RG] = meshgrid(Azi,Rg);
@@ -63,12 +63,12 @@ txDn = [];
 
 %% loop through mat files
 % numDays = numel(dayFolder)-numel(dayFolderSave);
-for iDay = 15:15
+for iDay = 11:11
     dayFolder(iDay).polRun = dir(fullfile(baseDir,dayFolder(iDay).name,'*_pol.mat'));
-    output_fname =   num2str(dayFolder(iDay).name);
+    output_fname =   [num2str(dayFolder(iDay).name),num2str(desiredAziIdx)];
     
     %% loop through all runs for this day
-    for iRun = 1:100 %loop through files
+    for iRun = 300:528 %loop through files
         
         cubeName = fullfile(baseDir,dayFolder(iDay).name,dayFolder(iDay).polRun(iRun).name);
         
