@@ -33,7 +33,7 @@ for i = 1:size(Ue,2)
     V(:,i) = velR(2,:);
 end
 
-%% band average to a different frequency
+%% band average (time)
 
 Ubave = zeros(size(U));
 Vbave = zeros(size(V));

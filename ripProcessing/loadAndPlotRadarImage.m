@@ -2,9 +2,9 @@
 
 clear variables
 addpath(genpath('C:\Data\ISDRI\isdri-scripts'))
-wholeDomain = 0;    % 1 if you want a plot of the entire domain
+wholeDomain = 1;    % 1 if you want a plot of the entire domain
 localOrUTM = 'UTM'; % 'local' or 'UTM' 
-smallDomain = 1;    % 1 if you want a plot of a smaller, rotated domain for rips
+smallDomain = 0;    % 1 if you want a plot of a smaller, rotated domain for rips
 
 % Load file
 % matFile = 'E:\guadalupe\processed\2017-10-05\Guadalupe_20172780200_pol.mat';
@@ -16,7 +16,9 @@ smallDomain = 1;    % 1 if you want a plot of a smaller, rotated domain for rips
 % matFile = 'E:\guadalupe\processed\2017-09-24\Guadalupe_20172672100_pol.mat';
 % matFile = 'E:\guadalupe\processed\2017-10-19\Guadalupe_20172920100_pol.mat';
 % matFile = 'E:\guadalupe\processed\2017-10-22\Guadalupe_20172950600_pol.mat';
-matFile = 'E:\guadalupe\processed\2017-09-12\Guadalupe_20172552300_pol.mat';
+% matFile = 'E:\guadalupe\processed\2017-09-12\Guadalupe_20172552300_pol.mat';
+% matFile = 'E:\guadalupe\processed\2017-10-17\Guadalupe_20172901930_pol.mat';
+matFile = 'E:\guadalupe\processed\2017-09-12\Guadalupe_20172552315_pol.mat';
 load(matFile)
 
 % define parameters

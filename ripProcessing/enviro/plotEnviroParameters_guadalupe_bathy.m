@@ -1,4 +1,4 @@
-%% plotEnviroParameters.m - 
+%% plotEnviroParameters.m -  
 clear variables; home
 
 %% USER INPUTS
@@ -14,10 +14,15 @@ addpath('D:\Data\ISDRI\SupportData\APL_MetStations')
 % dn = datenum([2017,08,31,21,0,0]):1/24:datenum([2017,10,26,15,0,0]);
 % dv = datevec(dn);
 load('C:\Data\ISDRI\postprocessed\rips\DataAvailability_Rips_dv.mat')
+load('\\depot\cce_u1\haller\shared\odea\ISDRI\ISDRI\newRipMatrix\bathyRips.mat')
 load('\\depot\cce_u1\haller\shared\odea\ISDRI\ISDRI\newRipMatrix\rips.mat')
-guadalupeRips = dv;
-clear dv
+guadalupeRips = dv(724:939,:);
+clear dv dn
+dv = guadalupeRips(:,1:4);
+dv(:,5:6) = 0;
+dn = datenum(dv);
 % guadalupeRips(4:end,5) = rips(:,2);
+guadalupeRips(:,5) = bathyRips(:,2); % oct 1 - 10
 
 %% Load wind and wave info
 % APL
@@ -54,9 +59,9 @@ highThreshold = 7;
 [lowWindEvents,highWindEvents,t_BA,windMag_BA] = windFilter_speed(t_APL,windMag_APL,lowThreshold,highThreshold);
 
 ripVecGuadalupe = NaN(1,length(dn));
-ripVecGuadalupe(guadalupeRips(:,5)==2) = 1;
+% ripVecGuadalupe(guadalupeRips(:,5)==2) = 1;
 % ripVecGuadalupe(guadalupeRips(:,5)==3|guadalupeRips(:,5)==4|guadalupeRips(:,5)==5) = 1;
-% ripVecGuadalupe(guadalupeRips(:,5)==5) = 1;
+ripVecGuadalupe(guadalupeRips(:,5)==2) = 1;
 
 tooBright = NaN(1,length(dn));
 tooBright(rips(:,3)==3|rips(:,3)==2) = 1;
@@ -116,16 +121,16 @@ meanDirSpr_dnrips_Guadalupe(ripVecGuadalupe ~= 1) = nan;
 figure(1)
 subplot(3,1,1)
 hold on
-for i = 1:length(highWindEvents)
-    boxstart = t_BA(highWindEvents(i,1));
-    boxlength = t_BA(highWindEvents(i,2))-t_BA(highWindEvents(i,1));
-    rectangle('Position',[boxstart -1 boxlength 3],'EdgeColor',[0.8 0.8 0.8],'FaceColor',[0.8 0.8 0.8])
-end
-for i = 1:length(lowWindEvents)
-    boxstart = t_BA(lowWindEvents(i,1));
-    boxlength = t_BA(lowWindEvents(i,2))-t_BA(lowWindEvents(i,1));
-    rectangle('Position',[boxstart -1 boxlength 3],'EdgeColor',[0.8 0.8 0.8],'FaceColor',[0.8 0.8 0.8])
-end
+% for i = 1:length(highWindEvents)
+%     boxstart = t_BA(highWindEvents(i,1));
+%     boxlength = t_BA(highWindEvents(i,2))-t_BA(highWindEvents(i,1));
+%     rectangle('Position',[boxstart -1 boxlength 3],'EdgeColor',[0.8 0.8 0.8],'FaceColor',[0.8 0.8 0.8])
+% end
+% for i = 1:length(lowWindEvents)
+%     boxstart = t_BA(lowWindEvents(i,1));
+%     boxlength = t_BA(lowWindEvents(i,2))-t_BA(lowWindEvents(i,1));
+%     rectangle('Position',[boxstart -1 boxlength 3],'EdgeColor',[0.8 0.8 0.8],'FaceColor',[0.8 0.8 0.8])
+% end
 plot(dnTides,WL,'b')
 hold on
 % plot(dn, tooBright,'-g','linewidth',2)

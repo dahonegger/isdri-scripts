@@ -10,8 +10,8 @@ addpath(genpath('C:\Data\ISDRI\isdri-scripts'));
 addpath(genpath('C:\Data\ISDRI\cBathy'));
 
 %% define time period of interest
-startTime = '20170907_0000';       % start on 20h
-endTime = '20170909_0000';         % end on 22h
+startTime = '20170910_0000';       % start on 20h
+endTime = '20170912_0000';         % end on 22h
 Hub = 'E';
 baseDir = [Hub ':\guadalupe\processed\'];
 
@@ -19,7 +19,7 @@ saveFolder = [Hub ':\guadalupe\postprocessed\inSitu\OceanoNPS\' startTime '-' en
 mkdir(saveFolder)
 
 %% define figure parameters
-colorAxisLimits = [20 180];
+colorAxisLimits = [5 100];
 XYLimits = [-8500 0; -7000 7000];
 % XYLimits = [-1500 -500; -1000 1000];
 
@@ -134,6 +134,15 @@ idxTChain = find(dnUTC > startdn & dnUTC < enddn);
 tempLimits(1) = min(min(tempB(:,idxTChain)));
 tempLimits(2) = max(max(tempB(:,idxTChain)));
 
+% find min and max temperature
+% minTemp = min([min(min(tempOC50)),min(min(tempOC32)),min(min(tempOC17)),...
+%     min(min(tempA)), min(min(tempC))]);
+% maxTemp = max([max(max(tempOC50)),max(max(tempOC32)),max(max(tempOC17)),...
+%     max(max(tempA)), max(max(tempC))]);
+minTemp = 12;
+maxTemp = 19;
+v = minTemp:2:maxTemp;
+
 [~,firstFileIndex] = min(abs(startdn - dnList));
 [~,lastFileIndex] = min(abs(enddn - dnList));
 
@@ -147,8 +156,8 @@ timeIntEnd = epoch2Matlab(mean(timeInt(1,:)));
 
 %% Load data from 512 rotation runs
 rotation = 13; % domain rotation
-imgNum = 1240;
-for iCube = 970:length(cubeList)
+imgNum = 1;
+for iCube = 1:length(cubeList)
     % Load radar data
     
     cubeName = [cubeList(iCube).folder '\' cubeList(iCube).name];
@@ -250,12 +259,7 @@ for iCube = 970:length(cubeList)
             timeInt = timeIntCell{IMAGEINDEX};
             time = epoch2Matlab(mean(timeInt));
             dv = datevec(time);
-            
-            % find min and max temperature
-            minTemp = min([min(min(tempOC50)),min(min(tempOC32)),min(min(tempOC17)),...
-                min(min(tempA)), min(min(tempC))]);
-            maxTemp = max([max(max(tempOC50)),max(max(tempOC32)),max(max(tempOC17)),...
-                max(max(tempA)), max(max(tempC))]);
+           
             
             fig = figure('visible','off');
             fig.PaperUnits = 'inches';
@@ -280,11 +284,18 @@ for iCube = 970:length(cubeList)
             sub2 = subplot(5,4,[2 3 4]);
             pcolor(tOC50,zBed50,tempOC50)
             shading flat; colorbar;
+            hold on
+%             contour(tOC50,zBed50,tempOC50,[14, 14],'k')
+%             contour(tOC50,zBed50,tempOC50,[16, 16],'k')
+%             contour(tOC50,zBed50,tempOC50,[17, 17],'k')
+            
             colormap(sub2,brewermap([],'*RdBu'))
             %             caxis([min(min(tempOC50)) max(max(tempOC50))])
             caxis([minTemp maxTemp])
             axis([timeInt1 timeIntEnd 0 max(zBed50)])
-            datetick('x','keeplimits')
+            ticks = timeInt1:4/24:timeIntEnd;
+            set(gca, 'xtick', ticks);
+            datetick('x',15,'keepticks','keeplimits');
             y1 = get(gca,'ylim');
             line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
             % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 11])
@@ -295,11 +306,17 @@ for iCube = 970:length(cubeList)
             sub3 = subplot(5,4,[6 7 8]);
             pcolor(tOC32,zBed32,tempOC32)
             shading flat; colorbar;
+            hold on
+%             contour(tOC50,zBed50,tempOC50,[14, 14],'k')
+%             contour(tOC50,zBed50,tempOC50,[16, 16],'k')
+% %             contour(tOC50,zBed50,tempOC50,[17, 17],'k')
             colormap(sub3,brewermap([],'*RdBu'))
             %             caxis([min(min(tempOC32)) max(max(tempOC32))])
             caxis([minTemp maxTemp])
             axis([timeInt1 timeIntEnd 0 max(zBed32)])
-            datetick('x','keeplimits')
+            ticks = timeInt1:4/24:timeIntEnd;
+            set(gca, 'xtick', ticks);
+            datetick('x',15,'keepticks','keeplimits');
             y1 = get(gca,'ylim');
             line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
             %xlabel('Time'); %ylabel('Distance above bed (m)');
@@ -313,7 +330,9 @@ for iCube = 970:length(cubeList)
             %             caxis([min(min(tempOC17)) max(max(tempOC17))])
             caxis([minTemp maxTemp])
             axis([timeInt1 timeIntEnd 0 max(zBed17)])
-            datetick('x','keeplimits')
+            ticks = timeInt1:4/24:timeIntEnd;
+            set(gca, 'xtick', ticks);
+            datetick('x',15,'keepticks','keeplimits');
             y1 = get(gca,'ylim');
             line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
             % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 11])
@@ -329,7 +348,9 @@ for iCube = 970:length(cubeList)
             %             caxis([min(min(tempA)) max(max(tempA))])
             caxis([minTemp maxTemp])
             axis([timeInt1 timeIntEnd 0 max(zBedA)])
-            datetick('x','keeplimits')
+            ticks = timeInt1:4/24:timeIntEnd;
+            set(gca, 'xtick', ticks);
+            datetick('x',15,'keepticks','keeplimits');
             y1 = get(gca,'ylim');
             line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
             % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 11])
@@ -344,7 +365,9 @@ for iCube = 970:length(cubeList)
             %             caxis([min(min(tempA)) max(max(tempA))])
             caxis([minTemp maxTemp])
             axis([timeInt1 timeIntEnd 0 max(zBedC)])
-            datetick('x','keeplimits')
+            ticks = timeInt1:4/24:timeIntEnd;
+            set(gca, 'xtick', ticks);
+           datetick('x',15,'keepticks','keeplimits');
             y1 = get(gca,'ylim');
             line([datenum(time) datenum(time)],y1,'Color','r','LineWidth',1)
             % axis([min(dnUTC_AQ(1:50000)) max(dnUTC_AQ(1:50000)) 1 11])
