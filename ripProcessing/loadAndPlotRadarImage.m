@@ -18,13 +18,13 @@ smallDomain = 0;    % 1 if you want a plot of a smaller, rotated domain for rips
 % matFile = 'E:\guadalupe\processed\2017-10-22\Guadalupe_20172950600_pol.mat';
 % matFile = 'E:\guadalupe\processed\2017-09-12\Guadalupe_20172552300_pol.mat';
 % matFile = 'E:\guadalupe\processed\2017-10-17\Guadalupe_20172901930_pol.mat';
-matFile = 'E:\guadalupe\processed\2017-09-12\Guadalupe_20172552315_pol.mat';
+matFile = 'E:\guadalupe\processed\2017-09-13\Guadalupe_20172562115_pol.mat';
 load(matFile)
 
 % define parameters
-% numRots = size(data,3)-1;
-numRots = 64;
-startRot = 200;
+numRots = size(data,3)-1;
+% numRots = 64;
+startRot = 1;
 
 % add MacMahan's instruments
 % find coordinates of MacMahan instruments
@@ -103,8 +103,8 @@ if wholeDomain == 1
     pcolor(xdom/1000,ydom/1000,timex)
     shading flat; axis image;
     hold on
-    plot(xJMC/1000,yJMC/1000,'b.','MarkerSize',10)
-    plot(xOcC/1000,yOcC/1000,'b.','MarkerSize',10)
+%     plot(xJMC/1000,yJMC/1000,'b.','MarkerSize',10)
+%     plot(xOcC/1000,yOcC/1000,'b.','MarkerSize',10)
     if strcmp(localOrUTM,'local')
         xlabel('Cross-shore x (m)'); ylabel('Alongshore y (m)');
     else
@@ -165,9 +165,9 @@ if smallDomain == 1
     shading flat; axis image;
     hold on
 %     plot(xJMC,yJMC,'b.','MarkerSize',20)
-    plot(xJMC(1:4),yJMC(1:4),'b.','MarkerSize',20)
+%     plot(xJMC(1:4),yJMC(1:4),'b.','MarkerSize',20)
 
-    plot(xOcC,yOcC,'g.','MarkerSize',20)
+%     plot(xOcC,yOcC,'g.','MarkerSize',20)
     colormap(hot)
     caxis([0 200])
     axis(axisLimits)

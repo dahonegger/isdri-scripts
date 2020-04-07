@@ -51,7 +51,7 @@ startRot = 64*6;
 rotation = 13;
 x0 = 0;         % for local
 y0 = 0;
-axisLimits = [-1500 -500 -1000 1000 ];
+axisLimits = [-3000 3000 -1500 -500 ];
 
 clear timex
 if size(data1,3)>64
@@ -92,25 +92,24 @@ maxPeakIdx2 = sortedPeakIdx2(1:9);
 
 % plot
 figure(1)
-subplot(1,2,1)
-plot(AST1(distanceFromPI,:),yC, 'b','LineWidth',2)
+subplot(2,1,1)
+plot(yC,AST1(distanceFromPI,:), 'b','LineWidth',2)
 hold on
-plot(zeros(size(yC)),yC,'k-.')
-plot(AST1(distanceFromPI,peakIdx1(maxPeakIdx1)),yC(peakIdx1(maxPeakIdx1)),'ro')
+plot(yC,zeros(size(yC)),'k-.')
+plot(yC(peakIdx1(maxPeakIdx1)),AST1(distanceFromPI,peakIdx1(maxPeakIdx1)),'ro')
 % set (gca,'Xdir','reverse')
 % plot(AST(peakIdx(maxPeakIdx)),yC(peakIdx(maxPeakIdx)),'ro')
 ttl = [startTime1 ' - ' endTime1];
 title(['Mean intensity anomaly ' startTime1 '-' endTime1])
-xlabel('Intensity anomaly')
-ylabel('Alongshore y (m)')
-set(gca,'Xdir','reverse')
+ylabel('Intensity anomaly')
+xlabel('Alongshore y (m)')
 % legend(ttl)
 
-hAxes = subplot(1,2,2);
-pcolor(xdom,ydom,timex1)
+hAxes = subplot(2,1,2);
+pcolor(ydom,xdom,timex1)
 shading flat; axis image;
 hold on
-% set (gca,'Ydir','reverse')
+set (gca,'Ydir','reverse')
 axis(axisLimits)
 ylim = get( hAxes, 'Ylim' );
 % plot(yC,xC(round(AST1(SZEdge,:))),'b','LineWidth',2)
@@ -132,34 +131,31 @@ title(ttl)
 
 % plot
 figure(2)
-subplot(1,2,1)
-plot(AST2(distanceFromPI,:),yC,'b','LineWidth',2)
+subplot(2,1,1)
+plot(yC,AST2(distanceFromPI,:),'b','LineWidth',2)
 hold on
-plot(AST2(distanceFromPI,peakIdx2(maxPeakIdx2)),yC(peakIdx2(maxPeakIdx2)),'ro')
-plot(zeros(size(yC)),yC,'k-.')
+plot(yC(peakIdx2(maxPeakIdx2)),AST2(distanceFromPI,peakIdx2(maxPeakIdx2)),'ro')
+plot(yC,zeros(size(yC)),'k-.')
 ttl = [startTime2 ' - ' endTime2];
 title(['Mean intensity anomaly ' startTime2 '-' endTime2])
-xlabel('Intensity anomaly')
-ylabel('Alongshore y (m)')
-set(gca,'Xdir','reverse')
-axis([-15 15 -1000 1000])
+ylabel('Intensity anomaly')
+xlabel('Alongshore y (m)')
 % legend(ttl)
 
-hAxes = subplot(1,2,2);
-pcolor(xdom,ydom,timex2)
+hAxes = subplot(2,1,2);
+pcolor(ydom,xdom,timex2)
 shading flat; axis image;
 hold on
 % plot(yC,xC(round(AST2(SZEdge,:))),'b','LineWidth',2)
 % plot(yC,xC(round(AST2(SZEdge,:)))-100,'b','LineWidth',2)
+for i = 1:length(maxPeakIdx2)
+    plot([yC(peakIdx2(maxPeakIdx2(i))) yC(peakIdx2(maxPeakIdx2(i)))],ylim,'b-','linewidth',1.5)
+end
+set (gca,'Ydir','reverse')
 axis(axisLimits)
 xlim = get( hAxes, 'Xlim' );
-for i = 1:length(maxPeakIdx2)
-    plot(xlim, [yC(peakIdx2(maxPeakIdx2(i))) yC(peakIdx2(maxPeakIdx2(i)))],'b-','linewidth',1.5)
-end
-% set (gca,'Ydir','reverse')
-
 colormap(hot)
-caxis([30 210])
+caxis([10 150])
 axis(axisLimits)
 ylabel('Cross-shore x (m)'); xlabel('Alongshore y (m)');
 ttl = [num2str(dv2(1)) num2str(dv2(2),'%02i') num2str(dv2(3),'%02i')...
@@ -187,15 +183,14 @@ hAxes = subplot(2,1,2);
 pcolor(ydom,xdom,timex2)
 shading flat; axis image;
 hold on
-plot(yC,xC(round(AST2(SZEdge,:))),'b','LineWidth',2)
-plot(yC,xC(round(AST2(SZEdge,:)))-100,'b','LineWidth',2)
+% plot(yC,xC(round(AST2(SZEdge,:))),'b','LineWidth',2)
+% plot(yC,xC(round(AST2(SZEdge,:)))-100,'b','LineWidth',2)
 set (gca,'Ydir','reverse')
-% axis(axisLimits)
+axis(axisLimits)
 xlim = get( hAxes, 'Xlim' );
 colormap(hot)
 caxis([10 150])
-% axis(axisLimits)
-axis([-3000 3000 -2000 -500])
+axis(axisLimits)
 ylabel('Cross-shore x (m)'); xlabel('Alongshore y (m)');
 ttl = [num2str(dv2(1)) num2str(dv2(2),'%02i') num2str(dv2(3),'%02i')...
     ' - ' num2str(dv2(4),'%02i') ':' num2str(dv2(5),'%02i') ':'...
